@@ -1,0 +1,279 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+name: "OpenStack Bastion with Tailscale"
+description: "Setup and manage an OpenStack bastion host with Tailscale VPN for secure remote access"
+author: "The Linux Foundation"
+
+inputs:
+  # Operation Mode
+  operation:
+    description: "Operation: 'setup' to create bastion, 'teardown' to destroy bastion"
+    required: true
+
+  # OpenStack Credentials
+  openstack_auth_url:
+    description: "OpenStack auth URL"
+    required: true
+  openstack_project_id:
+    description: "OpenStack project/tenant ID"
+    required: true
+  openstack_username:
+    description: "OpenStack username"
+    required: true
+  openstack_password:
+    description: "OpenStack password (will be base64 decoded if needed)"
+    required: true
+  openstack_region:
+    description: "OpenStack region"
+    required: false
+    default: "ca-ymq-1"
+  openstack_network_id:
+    description: "OpenStack network UUID"
+    required: false
+    default: ""
+
+  # Bastion Configuration
+  bastion_flavor:
+    description: "OpenStack flavor for bastion instance"
+    required: false
+    default: "v3-standard-2"
+  bastion_image:
+    description: "Base image for bastion host"
+    required: false
+    default: "Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]"
+  bastion_network:
+    description: "Network name for bastion host"
+    required: false
+    default: "odlci"
+  bastion_ssh_key:
+    description: "SSH key name for bastion (optional, Tailscale SSH used by default)"
+    required: false
+    default: ""
+  bastion_wait_timeout:
+    description: "Timeout in seconds to wait for bastion to be ready"
+    required: false
+    default: "300"
+  bastion_name:
+    description: "Name for the bastion instance (defaults to bastion-gh-{run_id})"
+    required: false
+    default: ""
+
+  # Tailscale Configuration (required for setup only)
+  # OAuth is the recommended method - requires both client_id and secret
+  tailscale_oauth_client_id:
+    description: "Tailscale OAuth client ID (recommended - requires oauth_secret)"
+    required: false
+    default: ""
+  tailscale_oauth_secret:
+    description: "Tailscale OAuth secret (recommended - requires oauth_client_id)"
+    required: false
+    default: ""
+  # Legacy auth key support - deprecated but still supported
+  tailscale_auth_key:
+    description: "Tailscale auth key (legacy - OAuth is recommended)"
+    required: false
+    default: ""
+  tailscale_tags:
+    description: "Comma-separated list of Tailscale tags (e.g., 'tag:ci,tag:bastion')"
+    required: false
+    default: "tag:ci"
+  tailscale_version:
+    description: "Tailscale version"
+    required: false
+    default: "latest"
+
+  # Options
+  debug_mode:
+    description: "Enable debug logging"
+    required: false
+    default: "false"
+
+outputs:
+  bastion_ip:
+    description: "Tailscale IP of the bastion host"
+    value: ${{ steps.get-bastion-ip.outputs.bastion_ip }}
+  bastion_name:
+    description: "Name of the bastion instance"
+    value: ${{ steps.create-bastion.outputs.bastion_name }}
+  status:
+    description: "Status of the operation (success/failure)"
+    value: ${{ steps.operation-status.outputs.status }}
+
+runs:
+  using: "composite"
+  steps:
+    # ========================================
+    # Setup Operation
+    # ========================================
+    - name: Setup Tailscale VPN (OAuth)
+      if: inputs.operation == 'setup' && inputs.tailscale_oauth_client_id != '' && inputs.tailscale_oauth_secret != ''
+      uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+      with:
+        oauth-client-id: ${{ inputs.tailscale_oauth_client_id }}
+        oauth-secret: ${{ inputs.tailscale_oauth_secret }}
+        version: ${{ inputs.tailscale_version }}
+        tags: ${{ inputs.tailscale_tags }}
+        hostname: github-runner-${{ github.run_id }}
+        args: --ssh --accept-routes --accept-dns=false
+
+    - name: Setup Tailscale VPN (Auth Key - Legacy)
+      if: inputs.operation == 'setup' && (inputs.tailscale_oauth_client_id == '' || inputs.tailscale_oauth_secret == '') && inputs.tailscale_auth_key != ''
+      uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+      with:
+        authkey: ${{ inputs.tailscale_auth_key }}
+        version: ${{ inputs.tailscale_version }}
+        hostname: github-runner-${{ github.run_id }}
+        args: --ssh --accept-routes --accept-dns=false
+
+    - name: Validate Tailscale credentials
+      if: inputs.operation == 'setup'
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.tailscale_oauth_client_id }}" ]] && [[ -z "${{ inputs.tailscale_auth_key }}" ]]; then
+          echo "❌ Error: Either tailscale_oauth_client_id+tailscale_oauth_secret OR tailscale_auth_key must be provided for setup"
+          exit 1
+        fi
+
+        if [[ -n "${{ inputs.tailscale_oauth_client_id }}" ]] && [[ -z "${{ inputs.tailscale_oauth_secret }}" ]]; then
+          echo "❌ Error: tailscale_oauth_secret is required when tailscale_oauth_client_id is provided"
+          exit 1
+        fi
+
+        if [[ -n "${{ inputs.tailscale_oauth_secret }}" ]] && [[ -z "${{ inputs.tailscale_oauth_client_id }}" ]]; then
+          echo "❌ Error: tailscale_oauth_client_id is required when tailscale_oauth_secret is provided"
+          exit 1
+        fi
+
+    - name: Verify Tailscale connection
+      if: inputs.operation == 'setup'
+      shell: bash
+      run: |
+        echo "✅ Tailscale status:"
+        sudo tailscale status
+
+    - name: Install OpenStack CLI
+      if: inputs.operation == 'setup' || inputs.operation == 'teardown'
+      shell: bash
+      run: |
+        pip install python-openstackclient
+
+    - name: Configure OpenStack credentials
+      if: inputs.operation == 'setup' || inputs.operation == 'teardown'
+      shell: bash
+      env:
+        OS_AUTH_URL: ${{ inputs.openstack_auth_url }}
+        OS_PROJECT_ID: ${{ inputs.openstack_project_id }}
+        OS_USERNAME: ${{ inputs.openstack_username }}
+        OS_PASSWORD: ${{ inputs.openstack_password }}
+        OS_REGION_NAME: ${{ inputs.openstack_region }}
+      run: |
+        echo "Configuring OpenStack credentials..."
+        # Decode password if it's base64 encoded
+        PASSWORD="${OS_PASSWORD}"
+        if echo "${PASSWORD}" | base64 -d &>/dev/null && [[ $(echo "${PASSWORD}" | base64 -d | wc -c) -gt 0 ]]; then
+          PASSWORD=$(echo "${PASSWORD}" | base64 -d)
+        fi
+        export OS_PASSWORD="${PASSWORD}"
+        
+        # Validate credentials
+        echo "Validating OpenStack credentials..."
+        if ! openstack token issue &>/dev/null; then
+          echo "❌ Error: Failed to authenticate with OpenStack"
+          exit 1
+        fi
+        echo "✅ OpenStack credentials validated"
+
+    - name: Create bastion host
+      if: inputs.operation == 'setup'
+      id: create-bastion
+      shell: bash
+      env:
+        TAILSCALE_OAUTH_CLIENT_ID: ${{ inputs.tailscale_oauth_client_id }}
+        TAILSCALE_OAUTH_SECRET: ${{ inputs.tailscale_oauth_secret }}
+        TAILSCALE_AUTH_KEY: ${{ inputs.tailscale_auth_key }}
+        TAILSCALE_TAGS: ${{ inputs.tailscale_tags }}
+        BASTION_NAME: ${{ inputs.bastion_name }}
+        BASTION_FLAVOR: ${{ inputs.bastion_flavor }}
+        BASTION_IMAGE: ${{ inputs.bastion_image }}
+        BASTION_NETWORK: ${{ inputs.bastion_network }}
+        BASTION_SSH_KEY: ${{ inputs.bastion_ssh_key }}
+        BASTION_WAIT_TIMEOUT: ${{ inputs.bastion_wait_timeout }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+        
+        # Set bastion name
+        BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
+        echo "bastion_name=${BASTION_NAME}" >> "${GITHUB_OUTPUT}"
+        
+        # Run setup script
+        "${{ github.action_path }}/scripts/setup-bastion.sh"
+
+    - name: Get bastion IP
+      if: inputs.operation == 'setup'
+      id: get-bastion-ip
+      shell: bash
+      env:
+        BASTION_NAME: ${{ steps.create-bastion.outputs.bastion_name }}
+        BASTION_WAIT_TIMEOUT: ${{ inputs.bastion_wait_timeout }}
+      run: |
+        set -euo pipefail
+        
+        TIMEOUT="${BASTION_WAIT_TIMEOUT}"
+        ELAPSED=0
+        RETRY_INTERVAL=10
+        
+        echo "Waiting for bastion Tailscale IP..."
+        while [[ $ELAPSED -lt $TIMEOUT ]]; do
+          # Get bastion IP from Tailscale
+          BASTION_IP=$(sudo tailscale status --json | jq -r ".Peer[] | select(.HostName | contains(\"${BASTION_NAME}\")) | .TailscaleIPs[0]" || echo "")
+          
+          if [[ -n "$BASTION_IP" && "$BASTION_IP" != "null" ]]; then
+            echo "✅ Bastion Tailscale IP: ${BASTION_IP}"
+            echo "bastion_ip=${BASTION_IP}" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          
+          echo "Waiting for bastion to connect to Tailscale... (${ELAPSED}s/${TIMEOUT}s)"
+          sleep "${RETRY_INTERVAL}"
+          ELAPSED=$((ELAPSED + RETRY_INTERVAL))
+        done
+        
+        echo "❌ Error: Timeout waiting for bastion Tailscale IP"
+        # Trigger automatic cleanup on timeout
+        if [[ -n "${BASTION_NAME}" ]]; then
+          echo "Triggering automatic cleanup due to timeout..."
+          "${{ github.action_path }}/scripts/cleanup-bastion.sh" "${BASTION_NAME}" || true
+        fi
+        exit 1
+
+    - name: Cleanup bastion host
+      if: inputs.operation == 'teardown'
+      shell: bash
+      env:
+        BASTION_NAME: ${{ inputs.bastion_name }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+        
+        BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
+        
+        # Run cleanup script
+        "${{ github.action_path }}/scripts/cleanup-bastion.sh" "${BASTION_NAME}"
+
+    - name: Set operation status
+      if: always()
+      id: operation-status
+      shell: bash
+      run: |
+        if [[ "${{ job.status }}" == "success" ]]; then
+          echo "status=success" >> "${GITHUB_OUTPUT}"
+        else
+          echo "status=failure" >> "${GITHUB_OUTPUT}"
+        fi
+
+branding:
+  icon: "cloud"
+  color: "blue"

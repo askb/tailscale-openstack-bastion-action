@@ -1,0 +1,132 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# Test workflow for Packer Action
+
+name: Test Packer Action
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Action mode (validate or build)"
+        required: false
+        type: choice
+        options:
+          - validate
+          - build
+        default: "validate"
+      packer_vars:
+        description: "Packer vars file (e.g., ubuntu-22.04)"
+        required: false
+        type: string
+        default: "ubuntu-22.04"
+      debug_mode:
+        description: "Enable debug logging"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "examples/**"
+      - "action.yaml"
+      - ".github/workflows/test-action.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "examples/**"
+      - "action.yaml"
+      - ".github/workflows/test-action.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-validate:
+    name: Test Action - Validate Mode
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.mode == 'validate')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        with:
+          submodules: true
+
+      - name: Run Packer Action - Validate (Auto-discovery)
+        uses: ./
+        with:
+          mode: validate
+          packer_working_dir: examples
+          path_prefix: packer-test
+          debug_mode: ${{ inputs.debug_mode || false }}
+
+  test-build:
+    name: Test Action - Build Mode
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && inputs.mode == 'build'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        with:
+          submodules: true
+
+      - name: Run Packer Action - Build
+        id: build
+        uses: ./
+        with:
+          mode: build
+          packer_working_dir: examples
+          packer_template: templates/builder.pkr.hcl
+          packer_vars_file: vars/ubuntu-22.04.pkrvars.hcl
+          path_prefix: packer-build
+          bastion_flavor: v3-standard-2
+          bastion_image: "Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]"
+          bastion_network: odlci
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
+          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          debug_mode: ${{ inputs.debug_mode || false }}
+
+      - name: Display build output
+        if: always()
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## Build Results
+
+          - **Mode:** ${{ steps.build.outputs.mode || 'N/A' }}
+          - **Status:** ${{ steps.build.outputs.status || 'N/A' }}
+          - **Bastion IP:** ${{ steps.build.outputs.bastion_ip || 'N/A' }}
+          - **Job Status:** ${{ job.status }}
+          EOF
+
+  summary:
+    name: Test Summary
+    if: always()
+    needs: [test-validate, test-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          {
+            echo "## Packer Action Test Summary"
+            echo ""
+            echo "- **Workflow:** ${{ github.workflow }}"
+            echo "- **Run ID:** ${{ github.run_id }}"
+            echo "- **Trigger:** ${{ github.event_name }}"
+            echo "- **Mode:** ${{ inputs.mode || 'auto (validate)' }}"
+            echo ""
+            echo "### Job Results"
+            echo "- **Validate:** ${{ needs.test-validate.result }}"
+            echo "- **Build:** ${{ needs.test-build.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"
