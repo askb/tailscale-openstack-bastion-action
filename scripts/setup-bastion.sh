@@ -210,12 +210,17 @@ create_bastion() {
         log "Command: ${cmd[*]}"
     fi
 
-    if "${cmd[@]}" >> "${LOG_FILE}" 2>&1; then
-        log "✅ Bastion instance created successfully"
-    else
+    # Capture both stdout and stderr
+    if ! ERROR_OUTPUT=$("${cmd[@]}" 2>&1); then
         error "Failed to create bastion instance"
+        error "OpenStack error output:"
+        error "${ERROR_OUTPUT}"
+        echo "${ERROR_OUTPUT}" >> "${LOG_FILE}"
         return 1
     fi
+    
+    log "✅ Bastion instance created successfully"
+    echo "${ERROR_OUTPUT}" >> "${LOG_FILE}"
 
     # Get instance details
     if [[ "${DEBUG_MODE}" == "true" ]]; then
