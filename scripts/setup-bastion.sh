@@ -218,7 +218,7 @@ create_bastion() {
         echo "${ERROR_OUTPUT}" >> "${LOG_FILE}"
         return 1
     fi
-    
+
     log "✅ Bastion instance created successfully"
     echo "${ERROR_OUTPUT}" >> "${LOG_FILE}"
 
