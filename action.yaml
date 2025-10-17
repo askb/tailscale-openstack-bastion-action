@@ -169,6 +169,9 @@ runs:
         OS_USER_ID: ${{ inputs.openstack_username }}
         OS_PASSWORD: ${{ inputs.openstack_password }}
         OS_REGION_NAME: ${{ inputs.openstack_region }}
+        OS_IDENTITY_API_VERSION: "3"
+        OS_USER_DOMAIN_NAME: "Default"
+        OS_PROJECT_DOMAIN_NAME: "Default"
       run: |
         echo "Configuring OpenStack credentials..."
         # Decode password if it's base64 encoded
