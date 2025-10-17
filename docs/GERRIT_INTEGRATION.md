@@ -59,17 +59,17 @@ Configure these in your GitHub repository settings (Settings → Secrets and var
 
 Configure these secrets:
 
-| Secret                  | Required For          | Description                           |
-| ----------------------- | --------------------- | ------------------------------------- |
-| `GERRIT_SSH_PRIVKEY`    | Validation            | SSH private key for Gerrit access     |
-| `CLOUD_ENV_JSON_B64`    | Build only            | Base64-encoded cloud environment JSON |
-| `CLOUDS_YAML_B64`       | Build only (optional) | Base64-encoded clouds.yaml            |
+| Secret                   | Required For          | Description                           |
+| ------------------------ | --------------------- | ------------------------------------- |
+| `GERRIT_SSH_PRIVKEY`     | Validation            | SSH private key for Gerrit access     |
+| `CLOUD_ENV_JSON_B64`     | Build only            | Base64-encoded cloud environment JSON |
+| `CLOUDS_YAML_B64`        | Build only (optional) | Base64-encoded clouds.yaml            |
 | `OPENSTACK_AUTH_URL`     | Build only            | OpenStack auth URL                    |
 | `OPENSTACK_PROJECT_ID`   | Build only            | OpenStack project ID                  |
 | `OPENSTACK_USERNAME`     | Build only            | OpenStack username                    |
 | `OPENSTACK_PASSWORD_B64` | Build only            | Base64-encoded password               |
 | `OPENSTACK_NETWORK_ID`   | Build only            | Network UUID                          |
-| `TAILSCALE_AUTH_KEY`    | Build only            | Tailscale auth key                    |
+| `TAILSCALE_AUTH_KEY`     | Build only            | Tailscale auth key                    |
 
 ## Validation Workflow (Gerrit Verify)
 

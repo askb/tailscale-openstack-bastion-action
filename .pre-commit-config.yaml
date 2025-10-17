@@ -23,10 +23,11 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: detect-private-key
-      - id: no-commit-to-branch
-        args:
-          - --branch=master
-          - --branch=main
+      # Disabled for CI workflows that commit directly to main
+      # - id: no-commit-to-branch
+      #   args:
+      #     - --branch=master
+      #     - --branch=main
 
   - repo: https://github.com/adrienverge/yamllint
     rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7 # frozen: v1.37.1

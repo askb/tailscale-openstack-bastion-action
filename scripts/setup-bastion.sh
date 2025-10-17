@@ -7,7 +7,6 @@
 set -euo pipefail
 
 # Script variables
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="${LOG_FILE:-/tmp/bastion-setup.log}"
 
 # Configuration from environment

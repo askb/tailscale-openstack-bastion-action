@@ -69,8 +69,8 @@ Configure these in your repository: **Settings → Secrets and variables → Act
 
 ### OpenStack OpenStack Secrets
 
-| Secret Name             | Description             | Where to Find                         |
-| ----------------------- | ----------------------- | ------------------------------------- |
+| Secret Name              | Description             | Where to Find                          |
+| ------------------------ | ----------------------- | -------------------------------------- |
 | `OPENSTACK_AUTH_URL`     | OpenStack auth endpoint | OpenStack dashboard → API Access       |
 | `OPENSTACK_PROJECT_ID`   | Project/tenant ID       | OpenStack dashboard → Project settings |
 | `OPENSTACK_PROJECT_NAME` | Project name            | OpenStack dashboard → Project settings |

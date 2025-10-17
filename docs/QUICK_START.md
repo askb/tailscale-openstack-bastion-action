@@ -65,16 +65,16 @@ Go to your repo: **Settings → Secrets and variables → Actions → New reposi
 
 Add these 8 secrets:
 
-| Secret Name             | Value                | Example                        |
-| ----------------------- | -------------------- | ------------------------------ |
-| `TAILSCALE_OAUTH_KEY`   | OAuth client secret  | `tskey-client-...`             |
-| `TAILSCALE_AUTH_KEY`    | Auth key from Step 1 | `tskey-auth-...`               |
+| Secret Name              | Value                | Example                         |
+| ------------------------ | -------------------- | ------------------------------- |
+| `TAILSCALE_OAUTH_KEY`    | OAuth client secret  | `tskey-client-...`              |
+| `TAILSCALE_AUTH_KEY`     | Auth key from Step 1 | `tskey-auth-...`                |
 | `OPENSTACK_AUTH_URL`     | OpenStack endpoint   | `https://auth.openstack.net/v3` |
-| `OPENSTACK_PROJECT_ID`   | Project ID           | `abc123...`                    |
-| `OPENSTACK_PROJECT_NAME` | Project name         | `my-project`                   |
-| `OPENSTACK_USERNAME`     | Your username        | `user@example.com`             |
-| `OPENSTACK_PASSWORD`     | Your password        | `your-password`                |
-| `OPENSTACK_REGION`       | Region code          | `ca-ymq-1`                     |
+| `OPENSTACK_PROJECT_ID`   | Project ID           | `abc123...`                     |
+| `OPENSTACK_PROJECT_NAME` | Project name         | `my-project`                    |
+| `OPENSTACK_USERNAME`     | Your username        | `user@example.com`              |
+| `OPENSTACK_PASSWORD`     | Your password        | `your-password`                 |
+| `OPENSTACK_REGION`       | Region code          | `ca-ymq-1`                      |
 
 ---
 
