@@ -52,7 +52,7 @@ jobs:
           operation: "setup"
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USER_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
           openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
@@ -97,7 +97,7 @@ jobs:
           operation: "teardown"
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USER_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
           openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           bastion_name: ${{ steps.setup.outputs.bastion_name }}

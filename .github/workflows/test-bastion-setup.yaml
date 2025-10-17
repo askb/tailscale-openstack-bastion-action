@@ -85,7 +85,7 @@ jobs:
           operation: "setup"
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USER_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
           openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
@@ -237,7 +237,7 @@ jobs:
           operation: "teardown"
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USER_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
           openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           bastion_name: ${{ needs.test-bastion-setup.outputs.bastion_name }}
@@ -254,7 +254,7 @@ jobs:
           # Configure OpenStack credentials
           export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
           export OS_PROJECT_ID="${{ secrets.OPENSTACK_PROJECT_ID }}"
-          export OS_USER_ID="${{ secrets.OPENSTACK_USER_ID }}"
+          export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
           export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
           export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
           export OS_IDENTITY_API_VERSION="3"
