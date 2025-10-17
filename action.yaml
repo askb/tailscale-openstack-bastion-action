@@ -70,6 +70,10 @@ inputs:
     description: "Tailscale OAuth secret (recommended - requires oauth_client_id)"
     required: false
     default: ""
+  tailscale_use_ephemeral_keys:
+    description: "Generate ephemeral auth keys from OAuth (recommended: true, legacy: false)"
+    required: false
+    default: "true"
   # Legacy auth key support - deprecated but still supported
   tailscale_auth_key:
     description: "Tailscale auth key (legacy - OAuth is recommended)"
@@ -206,6 +210,7 @@ runs:
         TAILSCALE_OAUTH_SECRET: ${{ inputs.tailscale_oauth_secret }}
         TAILSCALE_AUTH_KEY: ${{ inputs.tailscale_auth_key }}
         TAILSCALE_TAGS: ${{ inputs.tailscale_tags }}
+        TAILSCALE_USE_EPHEMERAL_KEYS: ${{ inputs.tailscale_use_ephemeral_keys }}
         # Bastion configuration
         BASTION_NAME: ${{ inputs.bastion_name }}
         BASTION_FLAVOR: ${{ inputs.bastion_flavor }}

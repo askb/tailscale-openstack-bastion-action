@@ -1,0 +1,92 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+name: Test OAuth with Ephemeral Keys
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-oauth-ephemeral:
+    name: Test OAuth → Ephemeral Key Flow
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup bastion with OAuth (ephemeral keys)
+        id: setup
+        uses: ./
+        with:
+          operation: setup
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
+          bastion_flavor: ${{ secrets.OPENSTACK_FLAVOR }}
+          bastion_image: ${{ secrets.OPENSTACK_IMAGE }}
+          bastion_network: ${{ secrets.OPENSTACK_NETWORK }}
+          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tailscale_use_ephemeral_keys: "true" # Use OAuth → ephemeral key flow
+          tailscale_tags: tag:ci,tag:bastion
+          debug_mode: "true"
+
+      - name: Display bastion information
+        run: |
+          echo "=== Bastion Status ==="
+          echo "Bastion Name: ${{ steps.setup.outputs.bastion_name }}"
+          echo "Bastion IP: ${{ steps.setup.outputs.bastion_ip }}"
+          echo "Status: ${{ steps.setup.outputs.status }}"
+          echo "======================"
+
+      - name: Verify bastion connectivity
+        run: |
+          echo "Testing SSH connectivity to bastion..."
+          BASTION_IP="${{ steps.setup.outputs.bastion_ip }}"
+
+          if [[ -z "${BASTION_IP}" ]]; then
+            echo "❌ Error: Bastion IP is empty"
+            exit 1
+          fi
+
+          # Wait for SSH to be available
+          for i in {1..30}; do
+            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "ubuntu@${BASTION_IP}" 'echo "SSH connection successful"'; then
+              echo "✅ SSH connection successful"
+              break
+            fi
+            echo "Waiting for SSH... (${i}/30)"
+            sleep 10
+          done
+
+          # Run basic commands
+          echo "Running basic commands on bastion..."
+          ssh -o StrictHostKeyChecking=no "ubuntu@${BASTION_IP}" 'hostname'
+          ssh -o StrictHostKeyChecking=no "ubuntu@${BASTION_IP}" 'tailscale status'
+
+      - name: Teardown bastion
+        if: always()
+        uses: ./
+        with:
+          operation: teardown
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          bastion_name: ${{ steps.setup.outputs.bastion_name }}
+          debug_mode: "true"
