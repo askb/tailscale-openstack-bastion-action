@@ -176,7 +176,7 @@ runs:
           PASSWORD=$(echo "${PASSWORD}" | base64 -d)
         fi
         export OS_PASSWORD="${PASSWORD}"
-        
+
         # Validate credentials
         echo "Validating OpenStack credentials..."
         if ! openstack token issue &>/dev/null; then
@@ -203,11 +203,11 @@ runs:
         DEBUG_MODE: ${{ inputs.debug_mode }}
       run: |
         set -euo pipefail
-        
+
         # Set bastion name
         BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
         echo "bastion_name=${BASTION_NAME}" >> "${GITHUB_OUTPUT}"
-        
+
         # Run setup script
         "${{ github.action_path }}/scripts/setup-bastion.sh"
 
@@ -220,27 +220,27 @@ runs:
         BASTION_WAIT_TIMEOUT: ${{ inputs.bastion_wait_timeout }}
       run: |
         set -euo pipefail
-        
+
         TIMEOUT="${BASTION_WAIT_TIMEOUT}"
         ELAPSED=0
         RETRY_INTERVAL=10
-        
+
         echo "Waiting for bastion Tailscale IP..."
         while [[ $ELAPSED -lt $TIMEOUT ]]; do
           # Get bastion IP from Tailscale
           BASTION_IP=$(sudo tailscale status --json | jq -r ".Peer[] | select(.HostName | contains(\"${BASTION_NAME}\")) | .TailscaleIPs[0]" || echo "")
-          
+
           if [[ -n "$BASTION_IP" && "$BASTION_IP" != "null" ]]; then
             echo "✅ Bastion Tailscale IP: ${BASTION_IP}"
             echo "bastion_ip=${BASTION_IP}" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          
+
           echo "Waiting for bastion to connect to Tailscale... (${ELAPSED}s/${TIMEOUT}s)"
           sleep "${RETRY_INTERVAL}"
           ELAPSED=$((ELAPSED + RETRY_INTERVAL))
         done
-        
+
         echo "❌ Error: Timeout waiting for bastion Tailscale IP"
         # Trigger automatic cleanup on timeout
         if [[ -n "${BASTION_NAME}" ]]; then
@@ -257,9 +257,9 @@ runs:
         DEBUG_MODE: ${{ inputs.debug_mode }}
       run: |
         set -euo pipefail
-        
+
         BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
-        
+
         # Run cleanup script
         "${{ github.action_path }}/scripts/cleanup-bastion.sh" "${BASTION_NAME}"
 

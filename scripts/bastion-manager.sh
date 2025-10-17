@@ -87,7 +87,7 @@ trap cleanup_on_failure EXIT
 
 create_cloud_init() {
     local auth_method=""
-    
+
     # Determine auth method - OAuth preferred over authkey
     if [[ -n "${TS_OAUTH_CLIENT_ID:-}" && -n "${TS_OAUTH_SECRET:-}" ]]; then
         auth_method="--auth-key=\$(curl -s -u \"${TS_OAUTH_CLIENT_ID}:${TS_OAUTH_SECRET}\" 'https://api.tailscale.com/api/v2/tailnet/-/keys' -X POST -H 'Content-Type: application/json' -d '{\"capabilities\":{\"devices\":{\"create\":{\"reusable\":false,\"ephemeral\":true,\"tags\":[\"tag:bastion\",\"tag:ci\"]}}}}' | jq -r '.key')"
@@ -129,13 +129,13 @@ write_files:
       #!/bin/bash
       set -e
       LOG="/var/log/bastion-init.log"
-      
+
       log_msg() {
           echo "[\$(date)] \$*" | tee -a "\$LOG"
       }
-      
+
       log_msg "=== Bastion initialization started ==="
-      
+
       # Wait for network
       log_msg "Waiting for network connectivity..."
       until ping -c 1 8.8.8.8 &>/dev/null; do
@@ -143,11 +143,11 @@ write_files:
           sleep 2
       done
       log_msg "Network ready"
-      
+
       # Install Tailscale
       log_msg "Installing Tailscale..."
       curl -fsSL https://tailscale.com/install.sh | sh
-      
+
       # Start Tailscale
       log_msg "Starting Tailscale..."
       tailscale up \\
@@ -157,18 +157,18 @@ write_files:
         --ssh \\
         --accept-routes \\
         --accept-dns=false
-      
+
       TAILSCALE_IP=\$(tailscale ip -4 2>/dev/null || echo "")
       if [[ -n "\$TAILSCALE_IP" ]]; then
           log_msg "✅ Tailscale connected: \${TAILSCALE_IP}"
       else
           log_msg "⚠️  Tailscale started but IP not immediately available"
       fi
-      
+
       # Create ready marker
       echo "READY" > /tmp/bastion-ready
       log_msg "=== Bastion ready ==="
-      
+
       # Display status banner
       cat <<EOF
 
@@ -177,10 +177,10 @@ write_files:
       ║   System uptime: \$(uptime -p)
       ║   Cloud-init took \${SECONDS}s             ║
       ╚═══════════════════════════════════════════╝
-      
+
       Check /var/log/bastion-init.log for detailed logs.
       Check /tmp/bastion-ready to verify bastion is ready.
-      
+
 EOF
     permissions: '0755'
 
@@ -224,34 +224,34 @@ setup_bastion() {
     log "========================================="
     log "Setting up bastion host: ${BASTION_NAME}"
     log "========================================="
-    
+
     # Validate required inputs
     if [[ -z "${OS_AUTH_URL:-}" ]]; then
         log_error "OS_AUTH_URL is required"
         return 1
     fi
-    
+
     if [[ -z "${OS_PROJECT_ID:-}" ]]; then
         log_error "OS_PROJECT_ID is required"
         return 1
     fi
-    
+
     if [[ -z "${OS_NETWORK:-}" ]]; then
         log_error "OS_NETWORK is required"
         return 1
     fi
-    
+
     # Create cloud-init file
     CLOUD_INIT_FILE=$(mktemp --suffix=.yaml)
     log_debug "Using temporary cloud-init file: ${CLOUD_INIT_FILE}"
     create_cloud_init
-    
+
     # Build OpenStack server create command
     local cmd="openstack server create"
     cmd="${cmd} --flavor '${OS_FLAVOR}'"
     cmd="${cmd} --image '${OS_IMAGE}'"
     cmd="${cmd} --nic net-id=${OS_NETWORK}"
-    
+
     # Add SSH key if specified
     if [[ -n "${OS_SSH_KEY:-}" ]]; then
         cmd="${cmd} --key-name ${OS_SSH_KEY}"
@@ -259,7 +259,7 @@ setup_bastion() {
     else
         log "No SSH key specified - using Tailscale SSH only"
     fi
-    
+
     # Add security groups
     if [[ -n "${OS_SECURITY_GROUPS}" ]]; then
         IFS=',' read -ra GROUPS <<< "${OS_SECURITY_GROUPS}"
@@ -267,14 +267,14 @@ setup_bastion() {
             cmd="${cmd} --security-group ${group}"
         done
     fi
-    
+
     cmd="${cmd} --user-data ${CLOUD_INIT_FILE}"
     cmd="${cmd} --wait"
     cmd="${cmd} '${BASTION_NAME}'"
-    
+
     log "Launching bastion instance..."
     log_debug "Command: ${cmd}"
-    
+
     if eval "${cmd}"; then
         log "✅ Bastion instance created successfully"
     else
@@ -282,21 +282,21 @@ setup_bastion() {
         rm -f "${CLOUD_INIT_FILE}"
         return 1
     fi
-    
+
     # Clean up cloud-init file
     rm -f "${CLOUD_INIT_FILE}"
-    
+
     # Get instance ID
     local bastion_id
     bastion_id=$(openstack server show "${BASTION_NAME}" -f value -c id)
     set_output "bastion_id" "${bastion_id}"
     set_output "bastion_name" "${BASTION_NAME}"
-    
+
     log "Bastion ID: ${bastion_id}"
-    
+
     # Wait for bastion to join Tailscale and be ready
     wait_for_bastion_ready
-    
+
     return $?
 }
 
@@ -310,28 +310,28 @@ wait_for_bastion_ready() {
     log "Timeout: ${CONNECTION_TIMEOUT}s"
     log "Check interval: ${READY_CHECK_INTERVAL}s"
     log "========================================="
-    
+
     local elapsed=0
     local max_attempts=$((CONNECTION_TIMEOUT / READY_CHECK_INTERVAL))
     local attempt=0
     local bastion_ip=""
-    
+
     while [[ $attempt -lt $max_attempts ]]; do
         attempt=$((attempt + 1))
         elapsed=$((attempt * READY_CHECK_INTERVAL))
-        
+
         log "Checking bastion status (attempt ${attempt}/${max_attempts}, ${elapsed}s elapsed)..."
-        
+
         # Check if bastion appears in Tailscale network
         if command -v tailscale &>/dev/null; then
             bastion_ip=$(sudo tailscale status --json 2>/dev/null | \
                 jq -r --arg hostname "${TS_HOSTNAME}" \
                 '.Peer[] | select(.HostName == $hostname) | .TailscaleIPs[0]' 2>/dev/null || echo "")
-            
+
             if [[ -n "${bastion_ip}" ]]; then
                 log "✅ Bastion found in Tailscale network: ${bastion_ip}"
                 set_output "bastion_ip" "${bastion_ip}"
-                
+
                 # Try to check ready marker via SSH
                 log "Checking bastion ready marker..."
                 if timeout 10 ssh -o StrictHostKeyChecking=no \
@@ -339,7 +339,7 @@ wait_for_bastion_ready() {
                     -o ConnectTimeout=5 \
                     "ubuntu@${bastion_ip}" \
                     "test -f /tmp/bastion-ready" 2>/dev/null; then
-                    
+
                     log "✅ Bastion ready marker found!"
                     log "========================================="
                     log "=== Bastion Status ==="
@@ -359,16 +359,16 @@ wait_for_bastion_ready() {
             set_output "status" "failed"
             return 1
         fi
-        
+
         sleep "${READY_CHECK_INTERVAL}"
     done
-    
+
     # Timeout reached
     log_error "========================================="
     log_error "Timeout waiting for bastion to be ready!"
     log_error "Elapsed time: ${elapsed}s"
     log_error "========================================="
-    
+
     # Capture bastion logs for debugging
     if [[ -n "${bastion_ip}" ]]; then
         log "Attempting to capture bastion logs..."
@@ -378,13 +378,13 @@ wait_for_bastion_ready() {
             "cat /var/log/bastion-init.log 2>/dev/null || cat /var/log/cloud-init-output.log 2>/dev/null" \
             2>&1 || log_error "Failed to retrieve bastion logs"
     fi
-    
+
     set_output "status" "failed"
-    
+
     # Trigger automatic cleanup
     log "Triggering automatic cleanup due to timeout..."
     teardown_bastion
-    
+
     return 1
 }
 
@@ -396,14 +396,14 @@ teardown_bastion() {
     log "========================================="
     log "Tearing down bastion host: ${BASTION_NAME}"
     log "========================================="
-    
+
     # Check if bastion exists
     if ! openstack server show "${BASTION_NAME}" &>/dev/null; then
         log "Bastion '${BASTION_NAME}' not found, nothing to teardown"
         set_output "status" "success"
         return 0
     fi
-    
+
     log "Deleting bastion instance..."
     if openstack server delete --wait "${BASTION_NAME}"; then
         log "✅ Bastion instance deleted successfully"
@@ -423,7 +423,7 @@ teardown_bastion() {
 main() {
     log "Bastion Manager - Mode: ${MODE}"
     log "Debug: ${DEBUG}"
-    
+
     case "${MODE}" in
         setup)
             setup_bastion

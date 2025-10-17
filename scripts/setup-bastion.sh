@@ -36,27 +36,27 @@ error() {
 # Validate required tools
 check_dependencies() {
     local missing_deps=()
-    
+
     for cmd in openstack jq; do
         if ! command -v "$cmd" &>/dev/null; then
             missing_deps+=("$cmd")
         fi
     done
-    
+
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         error "Missing required dependencies: ${missing_deps[*]}"
         return 1
     fi
-    
+
     log "✅ All dependencies available"
 }
 
 # Generate cloud-init configuration
 generate_cloud_init() {
     local cloud_init_file="/tmp/bastion-cloud-init.yaml"
-    
+
     log "Generating cloud-init configuration..."
-    
+
     # Determine which Tailscale authentication to use
     local tailscale_auth_cmd
     if [[ -n "${TAILSCALE_AUTH_KEY}" ]]; then
@@ -65,7 +65,7 @@ generate_cloud_init() {
         # OAuth will be configured via environment or other means
         tailscale_auth_cmd="--authkey=\${TAILSCALE_AUTH_KEY}"
     fi
-    
+
     cat > "${cloud_init_file}" <<'EOF'
 #cloud-config
 # OpenStack Tailscale Bastion Host Cloud-Init
@@ -162,24 +162,24 @@ EOF
     sed -i "s/BASTION_HOSTNAME_PLACEHOLDER/${BASTION_NAME}/g" "${cloud_init_file}"
     sed -i "s|TAILSCALE_AUTH_PLACEHOLDER|${tailscale_auth_cmd}|g" "${cloud_init_file}"
     sed -i "s/TAILSCALE_TAGS_PLACEHOLDER/${TAILSCALE_TAGS}/g" "${cloud_init_file}"
-    
+
     if [[ "${DEBUG_MODE}" == "true" ]]; then
         log "Cloud-init configuration:"
         cat "${cloud_init_file}" | tee -a "${LOG_FILE}"
     fi
-    
+
     echo "${cloud_init_file}"
 }
 
 # Create bastion instance
 create_bastion() {
     local cloud_init_file="$1"
-    
+
     log "🚀 Creating bastion instance: ${BASTION_NAME}"
     log "  Flavor: ${BASTION_FLAVOR}"
     log "  Image: ${BASTION_IMAGE}"
     log "  Network: ${BASTION_NETWORK}"
-    
+
     # Build openstack command
     local cmd=(
         "openstack" "server" "create"
@@ -187,7 +187,7 @@ create_bastion() {
         "--image" "${BASTION_IMAGE}"
         "--network" "${BASTION_NETWORK}"
     )
-    
+
     # Add SSH key if specified
     if [[ -n "${BASTION_SSH_KEY}" ]]; then
         cmd+=("--key-name" "${BASTION_SSH_KEY}")
@@ -195,24 +195,24 @@ create_bastion() {
     else
         log "  SSH Key: None (using Tailscale SSH)"
     fi
-    
+
     cmd+=(
         "--user-data" "${cloud_init_file}"
         "--wait"
         "${BASTION_NAME}"
     )
-    
+
     if [[ "${DEBUG_MODE}" == "true" ]]; then
         log "Command: ${cmd[*]}"
     fi
-    
+
     if "${cmd[@]}" >> "${LOG_FILE}" 2>&1; then
         log "✅ Bastion instance created successfully"
     else
         error "Failed to create bastion instance"
         return 1
     fi
-    
+
     # Get instance details
     if [[ "${DEBUG_MODE}" == "true" ]]; then
         log "Instance details:"
@@ -224,28 +224,28 @@ create_bastion() {
 main() {
     log "=== Starting Bastion Setup ==="
     log "Bastion Name: ${BASTION_NAME}"
-    
+
     # Check dependencies
     if ! check_dependencies; then
         error "Dependency check failed"
         exit 1
     fi
-    
+
     # Validate Tailscale authentication
     if [[ -z "${TAILSCALE_AUTH_KEY}" ]] && [[ -z "${TAILSCALE_OAUTH_CLIENT_ID}" ]]; then
         error "Either TAILSCALE_AUTH_KEY or TAILSCALE_OAUTH_CLIENT_ID must be set"
         exit 1
     fi
-    
+
     # Generate cloud-init
     cloud_init_file=$(generate_cloud_init)
-    
+
     # Create bastion
     if ! create_bastion "${cloud_init_file}"; then
         error "Bastion setup failed"
         exit 1
     fi
-    
+
     log "=== Bastion Setup Complete ==="
 }
 
