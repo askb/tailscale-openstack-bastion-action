@@ -53,7 +53,7 @@ jobs:
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
           openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
-          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD_B64 }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
           bastion_flavor: "v3-standard-2"
@@ -90,7 +90,8 @@ jobs:
           export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
           export OS_PROJECT_ID="${{ secrets.OPENSTACK_PROJECT_ID }}"
           export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
-          export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
+          export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD_B64 }}"
+          export OS_PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
           export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
           export OS_IDENTITY_API_VERSION="3"
           export OS_USER_DOMAIN_NAME="Default"
@@ -184,7 +185,7 @@ jobs:
           openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
           openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
           openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
-          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD_B64 }}
           openstack_region: ${{ secrets.OPENSTACK_REGION }}
           bastion_name: ${{ env.BASTION_NAME }}
           # Intentionally omit Tailscale credentials

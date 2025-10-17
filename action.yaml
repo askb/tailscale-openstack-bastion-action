@@ -174,11 +174,8 @@ runs:
         OS_PROJECT_DOMAIN_NAME: "Default"
       run: |
         echo "Configuring OpenStack credentials..."
-        # Decode password if it's base64 encoded
-        PASSWORD="${OS_PASSWORD}"
-        if echo "${PASSWORD}" | base64 -d &>/dev/null && [[ $(echo "${PASSWORD}" | base64 -d | wc -c) -gt 0 ]]; then
-          PASSWORD=$(echo "${PASSWORD}" | base64 -d)
-        fi
+        # Decode base64 encoded password
+        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
         export OS_PASSWORD="${PASSWORD}"
 
         # Validate credentials
