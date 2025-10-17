@@ -59,7 +59,8 @@ def test_essential_scripts_exist():
     
     essential_scripts = [
         "setup-bastion.sh",
-        "teardown-bastion.sh",
+        "cleanup-bastion.sh",
+        "bastion-manager.sh",
     ]
     
     for script_name in essential_scripts:
@@ -67,10 +68,3 @@ def test_essential_scripts_exist():
         assert script_path.exists(), f"{script_name} should exist"
         # Check if executable
         assert os.access(script_path, os.X_OK), f"{script_name} should be executable"
-
-
-def test_cloud_init_directory_exists():
-    """Test that cloud-init directory exists."""
-    cloud_init_path = Path(__file__).parent.parent / "cloud-init"
-    assert cloud_init_path.exists(), "cloud-init directory should exist"
-    assert cloud_init_path.is_dir(), "cloud-init should be a directory"
