@@ -18,7 +18,7 @@ def test_action_yaml_valid():
     action_path = Path(__file__).parent.parent / "action.yaml"
     with open(action_path, 'r') as f:
         data = yaml.safe_load(f)
-    
+
     assert isinstance(data, dict), "action.yaml should contain a dictionary"
     assert 'name' in data, "action.yaml should have a name field"
     assert 'description' in data, "action.yaml should have a description field"
@@ -31,9 +31,9 @@ def test_action_has_required_inputs():
     action_path = Path(__file__).parent.parent / "action.yaml"
     with open(action_path, 'r') as f:
         data = yaml.safe_load(f)
-    
+
     inputs = data.get('inputs', {})
-    
+
     # Check for essential inputs
     required_inputs = [
         'operation',
@@ -41,7 +41,7 @@ def test_action_has_required_inputs():
         'openstack_project_id',
         'openstack_region',
     ]
-    
+
     for input_name in required_inputs:
         assert input_name in inputs, f"action.yaml should have {input_name} input"
 
@@ -56,13 +56,13 @@ def test_scripts_directory_exists():
 def test_essential_scripts_exist():
     """Test that essential scripts exist."""
     scripts_path = Path(__file__).parent.parent / "scripts"
-    
+
     essential_scripts = [
         "setup-bastion.sh",
         "cleanup-bastion.sh",
         "bastion-manager.sh",
     ]
-    
+
     for script_name in essential_scripts:
         script_path = scripts_path / script_name
         assert script_path.exists(), f"{script_name} should exist"
