@@ -96,6 +96,7 @@ jobs:
           bastion_wait_timeout: ${{ env.BASTION_WAIT_TIMEOUT }}
           tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
           tailscale_tags: "tag:bastion"
           debug_mode: ${{ inputs.debug_mode || 'false' }}
 

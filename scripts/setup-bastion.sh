@@ -60,9 +60,14 @@ generate_cloud_init() {
     local tailscale_auth_cmd
     if [[ -n "${TAILSCALE_AUTH_KEY}" ]]; then
         tailscale_auth_cmd="--authkey=${TAILSCALE_AUTH_KEY}"
+    elif [[ -n "${TAILSCALE_OAUTH_CLIENT_ID}" ]] && [[ -n "${TAILSCALE_OAUTH_SECRET}" ]]; then
+        # OAuth cannot be used directly in cloud-init, we need an auth key
+        error "Error: Bastion requires tailscale_auth_key. OAuth can only be used for the GitHub runner."
+        error "Please provide tailscale_auth_key input for bastion authentication."
+        return 1
     else
-        # OAuth will be configured via environment or other means
-        tailscale_auth_cmd="--authkey=\${TAILSCALE_AUTH_KEY}"
+        error "Error: No Tailscale authentication provided for bastion"
+        return 1
     fi
 
     cat > "${cloud_init_file}" <<'EOF'
