@@ -89,7 +89,7 @@ jobs:
           # Configure OpenStack credentials
           export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
           export OS_PROJECT_ID="${{ secrets.OPENSTACK_PROJECT_ID }}"
-          export OS_USERNAME="${{ secrets.OPENSTACK_USER_ID }}"
+          export OS_USER_ID="${{ secrets.OPENSTACK_USER_ID }}"
           export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
           export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
           export OS_IDENTITY_API_VERSION="3"
