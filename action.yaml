@@ -183,8 +183,10 @@ runs:
 
         # Validate credentials
         echo "Validating OpenStack credentials..."
-        if ! openstack token issue &>/dev/null; then
+        if ! ERROR_OUTPUT=$(openstack token issue 2>&1); then
           echo "❌ Error: Failed to authenticate with OpenStack"
+          echo "OpenStack error output:"
+          echo "$ERROR_OUTPUT"
           exit 1
         fi
         echo "✅ OpenStack credentials validated"
