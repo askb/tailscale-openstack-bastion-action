@@ -25,7 +25,7 @@ TAILSCALE_TAGS="${TAILSCALE_TAGS:-tag:ci}"
 
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "${LOG_FILE}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "${LOG_FILE}" >&2
 }
 
 error() {
