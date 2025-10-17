@@ -192,10 +192,21 @@ runs:
       id: create-bastion
       shell: bash
       env:
+        # OpenStack credentials
+        OS_AUTH_URL: ${{ inputs.openstack_auth_url }}
+        OS_PROJECT_ID: ${{ inputs.openstack_project_id }}
+        OS_USERNAME: ${{ inputs.openstack_username }}
+        OS_PASSWORD: ${{ inputs.openstack_password }}
+        OS_REGION_NAME: ${{ inputs.openstack_region }}
+        OS_IDENTITY_API_VERSION: "3"
+        OS_USER_DOMAIN_NAME: "Default"
+        OS_PROJECT_DOMAIN_NAME: "Default"
+        # Tailscale configuration
         TAILSCALE_OAUTH_CLIENT_ID: ${{ inputs.tailscale_oauth_client_id }}
         TAILSCALE_OAUTH_SECRET: ${{ inputs.tailscale_oauth_secret }}
         TAILSCALE_AUTH_KEY: ${{ inputs.tailscale_auth_key }}
         TAILSCALE_TAGS: ${{ inputs.tailscale_tags }}
+        # Bastion configuration
         BASTION_NAME: ${{ inputs.bastion_name }}
         BASTION_FLAVOR: ${{ inputs.bastion_flavor }}
         BASTION_IMAGE: ${{ inputs.bastion_image }}
@@ -205,6 +216,10 @@ runs:
         DEBUG_MODE: ${{ inputs.debug_mode }}
       run: |
         set -euo pipefail
+
+        # Decode base64 encoded password
+        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        export OS_PASSWORD="${PASSWORD}"
 
         # Set bastion name
         BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
@@ -218,10 +233,24 @@ runs:
       id: get-bastion-ip
       shell: bash
       env:
+        # OpenStack credentials (needed for cleanup on timeout)
+        OS_AUTH_URL: ${{ inputs.openstack_auth_url }}
+        OS_PROJECT_ID: ${{ inputs.openstack_project_id }}
+        OS_USERNAME: ${{ inputs.openstack_username }}
+        OS_PASSWORD: ${{ inputs.openstack_password }}
+        OS_REGION_NAME: ${{ inputs.openstack_region }}
+        OS_IDENTITY_API_VERSION: "3"
+        OS_USER_DOMAIN_NAME: "Default"
+        OS_PROJECT_DOMAIN_NAME: "Default"
+        # Bastion configuration
         BASTION_NAME: ${{ steps.create-bastion.outputs.bastion_name }}
         BASTION_WAIT_TIMEOUT: ${{ inputs.bastion_wait_timeout }}
       run: |
         set -euo pipefail
+
+        # Decode base64 encoded password
+        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        export OS_PASSWORD="${PASSWORD}"
 
         TIMEOUT="${BASTION_WAIT_TIMEOUT}"
         ELAPSED=0
@@ -255,10 +284,24 @@ runs:
       if: inputs.operation == 'teardown'
       shell: bash
       env:
+        # OpenStack credentials
+        OS_AUTH_URL: ${{ inputs.openstack_auth_url }}
+        OS_PROJECT_ID: ${{ inputs.openstack_project_id }}
+        OS_USERNAME: ${{ inputs.openstack_username }}
+        OS_PASSWORD: ${{ inputs.openstack_password }}
+        OS_REGION_NAME: ${{ inputs.openstack_region }}
+        OS_IDENTITY_API_VERSION: "3"
+        OS_USER_DOMAIN_NAME: "Default"
+        OS_PROJECT_DOMAIN_NAME: "Default"
+        # Bastion configuration
         BASTION_NAME: ${{ inputs.bastion_name }}
         DEBUG_MODE: ${{ inputs.debug_mode }}
       run: |
         set -euo pipefail
+
+        # Decode base64 encoded password
+        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        export OS_PASSWORD="${PASSWORD}"
 
         BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
 
