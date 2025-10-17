@@ -1,0 +1,340 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# Test Bastion Setup and Teardown
+
+name: Test Bastion Setup and Teardown
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      bastion_flavor:
+        description: "OpenStack instance flavor for bastion"
+        required: false
+        type: string
+        default: "v3-standard-2"
+      bastion_image:
+        description: "Base image for bastion host"
+        required: false
+        type: string
+        default: "Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]"
+      bastion_network:
+        description: "Network for bastion host"
+        required: false
+        type: string
+        default: "odlci"
+      debug_mode:
+        description: "Enable debug logging"
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "cloud-init/**"
+      - "action.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "cloud-init/**"
+      - "action.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BASTION_NAME: "test-bastion-${{ github.run_id }}"
+  BASTION_WAIT_TIMEOUT: 300
+
+jobs:
+  test-bastion-setup:
+    name: Test Bastion Setup with OAuth
+    runs-on: ubuntu-latest
+    outputs:
+      bastion_ip: ${{ steps.setup.outputs.bastion_ip }}
+      bastion_name: ${{ steps.setup.outputs.bastion_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tailscale on Runner
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: test-runner-${{ github.run_id }}
+          args: --ssh --accept-routes --accept-dns=false
+
+      - name: Verify Runner Tailscale Connection
+        run: |
+          echo "=== Runner Tailscale Status ==="
+          sudo tailscale status
+          echo ""
+          echo "Runner IPv4: $(sudo tailscale ip -4)"
+          echo "Runner IPv6: $(sudo tailscale ip -6)"
+
+      - name: Setup Bastion
+        id: setup
+        uses: ./
+        with:
+          operation: "setup"
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
+          bastion_flavor: ${{ inputs.bastion_flavor || 'v3-standard-2' }}
+          bastion_image: ${{ inputs.bastion_image || 'Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]' }}
+          bastion_network: ${{ inputs.bastion_network || 'odlci' }}
+          bastion_name: ${{ env.BASTION_NAME }}
+          bastion_wait_timeout: ${{ env.BASTION_WAIT_TIMEOUT }}
+          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tailscale_tags: "tag:bastion"
+          debug_mode: ${{ inputs.debug_mode || 'false' }}
+
+      - name: Verify Bastion Output
+        run: |
+          echo "=== Bastion Information ==="
+          echo "Bastion IP: ${{ steps.setup.outputs.bastion_ip }}"
+          echo "Bastion Name: ${{ steps.setup.outputs.bastion_name }}"
+          echo "Status: ${{ steps.setup.outputs.status }}"
+
+          if [ -z "${{ steps.setup.outputs.bastion_ip }}" ]; then
+            echo "❌ ERROR: Bastion IP is empty"
+            exit 1
+          fi
+
+          if [ -z "${{ steps.setup.outputs.bastion_name }}" ]; then
+            echo "❌ ERROR: Bastion name is empty"
+            exit 1
+          fi
+
+          echo "✅ Bastion outputs are valid"
+
+  test-bastion-connectivity:
+    name: Test Bastion Connectivity
+    needs: test-bastion-setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tailscale on Runner
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: test-connectivity-${{ github.run_id }}
+          args: --ssh --accept-routes --accept-dns=false
+
+      - name: Wait for Bastion in Tailscale Network
+        run: |
+          echo "Waiting for bastion to appear in Tailscale network..."
+          TIMEOUT=60
+          ELAPSED=0
+          INTERVAL=5
+
+          while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
+            if sudo tailscale status | grep -q "${{ needs.test-bastion-setup.outputs.bastion_name }}"; then
+              echo "✅ Bastion found in Tailscale network"
+              sudo tailscale status | grep "${{ needs.test-bastion-setup.outputs.bastion_name }}"
+              exit 0
+            fi
+            echo "Waiting... ($ELAPSED/$TIMEOUT seconds)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "❌ Timeout: Bastion not found in Tailscale network"
+          sudo tailscale status
+          exit 1
+
+      - name: Test SSH Connectivity
+        run: |
+          echo "Testing SSH connectivity to bastion..."
+          BASTION_IP="${{ needs.test-bastion-setup.outputs.bastion_ip }}"
+
+          if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+                 root@"${BASTION_IP}" "echo 'SSH connection successful'" 2>/dev/null; then
+            echo "✅ SSH connection successful"
+          else
+            echo "❌ SSH connection failed"
+            exit 1
+          fi
+
+      - name: Test Bastion Commands
+        run: |
+          BASTION_IP="${{ needs.test-bastion-setup.outputs.bastion_ip }}"
+
+          echo "=== Running diagnostic commands on bastion ==="
+
+          echo "1. System info:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "uname -a"
+
+          echo "2. Tailscale status:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "tailscale status"
+
+          echo "3. Network interfaces:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "ip addr show | grep -E 'inet|tailscale'"
+
+          echo "4. Check bastion ready marker:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "cat /tmp/bastion-ready"
+
+          echo "✅ All diagnostic commands executed successfully"
+
+      - name: Test Network Connectivity from Bastion
+        run: |
+          BASTION_IP="${{ needs.test-bastion-setup.outputs.bastion_ip }}"
+
+          echo "Testing network connectivity from bastion..."
+
+          # Test DNS resolution
+          echo "1. DNS resolution:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "nslookup google.com"
+
+          # Test external connectivity
+          echo "2. External connectivity:"
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "curl -s https://ifconfig.me"
+
+          # Test Tailscale connectivity
+          echo "3. Tailscale peer connectivity:"
+          RUNNER_IP=$(sudo tailscale ip -4)
+          ssh -o StrictHostKeyChecking=no root@"${BASTION_IP}" "ping -c 3 ${RUNNER_IP}"
+
+          echo "✅ Network connectivity tests passed"
+
+  test-bastion-teardown:
+    name: Test Bastion Teardown
+    needs: [test-bastion-setup, test-bastion-connectivity]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tailscale on Runner
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: test-teardown-${{ github.run_id }}
+          args: --ssh --accept-routes --accept-dns=false
+
+      - name: Teardown Bastion
+        uses: ./
+        with:
+          operation: "teardown"
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          bastion_name: ${{ needs.test-bastion-setup.outputs.bastion_name }}
+          debug_mode: ${{ inputs.debug_mode || 'false' }}
+
+      - name: Verify Bastion Cleanup
+        run: |
+          echo "Verifying bastion cleanup..."
+
+          # Setup OpenStack CLI
+          python -m pip install --upgrade pip
+          pip install python-openstackclient
+
+          # Configure OpenStack credentials
+          export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
+          export OS_PROJECT_ID="${{ secrets.OPENSTACK_PROJECT_ID }}"
+          export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
+          export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
+          export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
+          export OS_IDENTITY_API_VERSION="3"
+          export OS_USER_DOMAIN_NAME="Default"
+          export OS_PROJECT_DOMAIN_NAME="Default"
+
+          # Check if bastion instance still exists
+          if openstack server show "${{ needs.test-bastion-setup.outputs.bastion_name }}" &>/dev/null; then
+            echo "❌ ERROR: Bastion instance still exists after teardown"
+            openstack server show "${{ needs.test-bastion-setup.outputs.bastion_name }}"
+            exit 1
+          else
+            echo "✅ Bastion instance successfully deleted"
+          fi
+
+      - name: Verify Tailscale Cleanup
+        run: |
+          echo "Verifying Tailscale cleanup..."
+
+          # Wait a bit for Tailscale network to update
+          sleep 10
+
+          # Check if bastion is still in Tailscale network
+          if sudo tailscale status | grep -q "${{ needs.test-bastion-setup.outputs.bastion_name }}"; then
+            echo "⚠️ WARNING: Bastion still appears in Tailscale network (may take time to update)"
+            sudo tailscale status | grep "${{ needs.test-bastion-setup.outputs.bastion_name }}"
+          else
+            echo "✅ Bastion removed from Tailscale network"
+          fi
+
+  test-summary:
+    name: Test Summary
+    needs:
+      [test-bastion-setup, test-bastion-connectivity, test-bastion-teardown]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Generate Test Summary
+        run: |
+          {
+            echo "## Bastion Action Test Summary"
+            echo ""
+            echo "- **Workflow:** ${{ github.workflow }}"
+            echo "- **Run ID:** ${{ github.run_id }}"
+            echo "- **Trigger:** ${{ github.event_name }}"
+            echo "- **Branch:** ${{ github.ref_name }}"
+            echo ""
+            echo "### Test Results"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Setup test result
+          if [ "${{ needs.test-bastion-setup.result }}" == "success" ]; then
+            echo "- ✅ **Bastion Setup:** Success" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ❌ **Bastion Setup:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Connectivity test result
+          if [ "${{ needs.test-bastion-connectivity.result }}" == "success" ]; then
+            echo "- ✅ **Connectivity Tests:** Success" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ❌ **Connectivity Tests:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Teardown test result
+          if [ "${{ needs.test-bastion-teardown.result }}" == "success" ]; then
+            echo "- ✅ **Bastion Teardown:** Success" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- ❌ **Bastion Teardown:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Overall status
+          if [ "${{ needs.test-bastion-setup.result }}" == "success" ] && \
+             [ "${{ needs.test-bastion-connectivity.result }}" == "success" ] && \
+             [ "${{ needs.test-bastion-teardown.result }}" == "success" ]; then
+            echo "### ✅ All Tests Passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ❌ Some Tests Failed" >> "$GITHUB_STEP_SUMMARY"
+          fi

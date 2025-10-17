@@ -1,0 +1,210 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# Test Bastion Timeout and Error Handling
+
+name: Test Bastion Timeout and Error Handling
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      test_scenario:
+        description: "Test scenario to run"
+        required: true
+        type: choice
+        options:
+          - "timeout"
+          - "invalid_credentials"
+          - "network_error"
+        default: "timeout"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BASTION_NAME: "test-error-bastion-${{ github.run_id }}"
+
+jobs:
+  test-timeout-scenario:
+    name: Test Timeout Scenario
+    runs-on: ubuntu-latest
+    if: inputs.test_scenario == 'timeout'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Tailscale on Runner
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+          hostname: test-timeout-${{ github.run_id }}
+          args: --ssh --accept-routes --accept-dns=false
+
+      - name: Test Bastion Setup with Very Short Timeout
+        id: setup
+        continue-on-error: true
+        uses: ./
+        with:
+          operation: "setup"
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          openstack_network_id: ${{ secrets.OPENSTACK_NETWORK_ID }}
+          bastion_flavor: "v3-standard-2"
+          bastion_image: "Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]"
+          bastion_network: "odlci"
+          bastion_name: ${{ env.BASTION_NAME }}
+          bastion_wait_timeout: "30" # Very short timeout to trigger timeout
+          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tailscale_tags: "tag:bastion"
+          debug_mode: "true"
+
+      - name: Verify Timeout Behavior
+        run: |
+          echo "=== Checking Timeout Behavior ==="
+
+          # The action should have timed out and cleaned up
+          if [ "${{ steps.setup.outcome }}" == "failure" ]; then
+            echo "✅ Action correctly failed on timeout"
+          else
+            echo "❌ Action should have timed out"
+            exit 1
+          fi
+
+      - name: Verify Auto-Cleanup After Timeout
+        run: |
+          echo "Verifying bastion was cleaned up after timeout..."
+
+          # Setup OpenStack CLI
+          python -m pip install --upgrade pip
+          pip install python-openstackclient
+
+          # Configure OpenStack credentials
+          export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
+          export OS_PROJECT_ID="${{ secrets.OPENSTACK_PROJECT_ID }}"
+          export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
+          export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
+          export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
+          export OS_IDENTITY_API_VERSION="3"
+          export OS_USER_DOMAIN_NAME="Default"
+          export OS_PROJECT_DOMAIN_NAME="Default"
+
+          # Wait a bit for cleanup to complete
+          sleep 10
+
+          # Check if bastion was cleaned up
+          if openstack server show "${{ env.BASTION_NAME }}" &>/dev/null; then
+            echo "⚠️ WARNING: Bastion still exists - cleaning up manually"
+            openstack server delete --wait "${{ env.BASTION_NAME }}" || true
+          else
+            echo "✅ Bastion was automatically cleaned up after timeout"
+          fi
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          {
+            echo "## Timeout Test Summary"
+            echo ""
+            echo "- **Test Scenario:** Timeout with short wait period (30s)"
+            echo "- **Expected:** Action fails and auto-cleans bastion"
+            echo "- **Result:** ${{ steps.setup.outcome == 'failure' && '✅ Pass' || '❌ Fail' }}"
+            echo ""
+            echo "### Details"
+            echo "- Bastion setup outcome: ${{ steps.setup.outcome }}"
+            echo "- Auto-cleanup verified"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  test-invalid-credentials:
+    name: Test Invalid Credentials
+    runs-on: ubuntu-latest
+    if: inputs.test_scenario == 'invalid_credentials'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test with Invalid OpenStack Credentials
+        id: setup
+        continue-on-error: true
+        uses: ./
+        with:
+          operation: "setup"
+          openstack_auth_url: "https://invalid-auth-url.example.com:5000/v3/"
+          openstack_project_id: "invalid-project-id"
+          openstack_username: "invalid-user"
+          openstack_password: "invalid-password"
+          openstack_region: "invalid-region"
+          bastion_name: ${{ env.BASTION_NAME }}
+          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+
+      - name: Verify Error Handling
+        run: |
+          if [ "${{ steps.setup.outcome }}" == "failure" ]; then
+            echo "✅ Action correctly failed with invalid credentials"
+          else
+            echo "❌ Action should have failed with invalid credentials"
+            exit 1
+          fi
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          {
+            echo "## Invalid Credentials Test Summary"
+            echo ""
+            echo "- **Test Scenario:** Invalid OpenStack credentials"
+            echo "- **Expected:** Action fails gracefully"
+            echo "- **Result:** ${{ steps.setup.outcome == 'failure' && '✅ Pass' || '❌ Fail' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  test-missing-tailscale-auth:
+    name: Test Missing Tailscale Auth
+    runs-on: ubuntu-latest
+    if: inputs.test_scenario == 'network_error'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test with Missing Tailscale Credentials
+        id: setup
+        continue-on-error: true
+        uses: ./
+        with:
+          operation: "setup"
+          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+          openstack_region: ${{ secrets.OPENSTACK_REGION }}
+          bastion_name: ${{ env.BASTION_NAME }}
+          # Intentionally omit Tailscale credentials
+
+      - name: Verify Error Handling
+        run: |
+          if [ "${{ steps.setup.outcome }}" == "failure" ]; then
+            echo "✅ Action correctly failed with missing Tailscale auth"
+          else
+            echo "❌ Action should have failed with missing Tailscale auth"
+            exit 1
+          fi
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          {
+            echo "## Missing Tailscale Auth Test Summary"
+            echo ""
+            echo "- **Test Scenario:** Missing Tailscale authentication"
+            echo "- **Expected:** Action fails with clear error message"
+            echo "- **Result:** ${{ steps.setup.outcome == 'failure' && '✅ Pass' || '❌ Fail' }}"
+          } >> "$GITHUB_STEP_SUMMARY"

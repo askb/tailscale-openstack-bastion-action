@@ -38,13 +38,13 @@ jobs:
           openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
           tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
-      
+
       # Use bastion
       - name: Use bastion for remote operations
         run: |
           echo "Bastion IP: ${{ steps.bastion.outputs.bastion_ip }}"
           # Your operations here
-      
+
       # Always cleanup
       - name: Cleanup bastion
         if: always()
@@ -78,13 +78,13 @@ jobs:
 
 ### Required Inputs
 
-| Input | Description |
-|-------|-------------|
-| `operation` | Operation to perform: `setup` or `teardown` |
-| `openstack_auth_url` | OpenStack authentication URL |
-| `openstack_project_id` | OpenStack project/tenant ID |
-| `openstack_username` | OpenStack username |
-| `openstack_password` | OpenStack password (base64 encoded or plain) |
+| Input                  | Description                                  |
+| ---------------------- | -------------------------------------------- |
+| `operation`            | Operation to perform: `setup` or `teardown`  |
+| `openstack_auth_url`   | OpenStack authentication URL                 |
+| `openstack_project_id` | OpenStack project/tenant ID                  |
+| `openstack_username`   | OpenStack username                           |
+| `openstack_password`   | OpenStack password (base64 encoded or plain) |
 
 ### Tailscale Authentication (for setup operation)
 
@@ -101,27 +101,27 @@ jobs:
 
 ### Optional Inputs
 
-| Input | Description | Default |
-|-------|-------------|---------|
-| `openstack_region` | OpenStack region | `ca-ymq-1` |
-| `openstack_network_id` | OpenStack network UUID | `` |
-| `bastion_flavor` | Instance flavor | `v3-standard-2` |
-| `bastion_image` | Base image name | `Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]` |
-| `bastion_network` | Network name | `odlci` |
-| `bastion_ssh_key` | SSH key name | `` |
-| `bastion_wait_timeout` | Timeout in seconds | `300` |
-| `bastion_name` | Custom bastion name | `bastion-gh-{run_id}` |
-| `tailscale_tags` | Tailscale tags | `tag:ci` |
-| `tailscale_version` | Tailscale version | `latest` |
-| `debug_mode` | Enable debug logging | `false` |
+| Input                  | Description            | Default                                    |
+| ---------------------- | ---------------------- | ------------------------------------------ |
+| `openstack_region`     | OpenStack region       | `ca-ymq-1`                                 |
+| `openstack_network_id` | OpenStack network UUID | ``                                         |
+| `bastion_flavor`       | Instance flavor        | `v3-standard-2`                            |
+| `bastion_image`        | Base image name        | `Ubuntu 22.04.5 LTS (x86_64) [2025-03-27]` |
+| `bastion_network`      | Network name           | `odlci`                                    |
+| `bastion_ssh_key`      | SSH key name           | ``                                         |
+| `bastion_wait_timeout` | Timeout in seconds     | `300`                                      |
+| `bastion_name`         | Custom bastion name    | `bastion-gh-{run_id}`                      |
+| `tailscale_tags`       | Tailscale tags         | `tag:ci`                                   |
+| `tailscale_version`    | Tailscale version      | `latest`                                   |
+| `debug_mode`           | Enable debug logging   | `false`                                    |
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
-| `bastion_ip` | Tailscale IP address of the bastion host |
-| `bastion_name` | Name of the bastion instance |
-| `status` | Operation status (`success` or `failure`) |
+| Output         | Description                               |
+| -------------- | ----------------------------------------- |
+| `bastion_ip`   | Tailscale IP address of the bastion host  |
+| `bastion_name` | Name of the bastion instance              |
+| `status`       | Operation status (`success` or `failure`) |
 
 ## Configuration
 
@@ -130,6 +130,7 @@ jobs:
 Configure these secrets in your GitHub repository:
 
 #### Required Secrets
+
 - `OPENSTACK_AUTH_URL`: OpenStack authentication endpoint
 - `OPENSTACK_PROJECT_ID`: OpenStack project/tenant ID
 - `OPENSTACK_USERNAME`: OpenStack username
@@ -138,10 +139,12 @@ Configure these secrets in your GitHub repository:
 #### Tailscale Secrets (choose one method)
 
 **OAuth Method (Recommended)**
+
 - `TAILSCALE_OAUTH_CLIENT_ID`: OAuth client ID
 - `TAILSCALE_OAUTH_SECRET`: OAuth client secret
 
 **Auth Key Method (Legacy)**
+
 - `TAILSCALE_AUTH_KEY`: Authentication key
 
 ### Tailscale ACL Configuration
@@ -152,7 +155,12 @@ Your Tailscale ACL must include:
 {
   "tagOwners": {
     "tag:ci": ["autogroup:admin", "autogroup:owner", "tag:ci"],
-    "tag:bastion": ["autogroup:admin", "autogroup:owner", "tag:ci", "tag:bastion"]
+    "tag:bastion": [
+      "autogroup:admin",
+      "autogroup:owner",
+      "tag:ci",
+      "tag:bastion"
+    ]
   },
   "acls": [
     {
@@ -177,6 +185,7 @@ See [Tailscale Setup Guide](docs/TAILSCALE_SETUP.md) for detailed configuration.
 ## How It Works
 
 1. **Setup Operation**:
+
    - Connects GitHub Actions runner to Tailscale network
    - Creates cloud-init configuration with Tailscale setup
    - Launches OpenStack instance with cloud-init
@@ -199,6 +208,62 @@ See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for development and testing guidelines
 ## License
 
 Apache License 2.0 - See [LICENSE](LICENSE) for details.
+
+## Testing
+
+This action includes comprehensive test workflows to validate functionality:
+
+### Test Workflows
+
+1. **test-bastion-setup.yaml** - Complete lifecycle test
+
+   - Tests bastion setup with OAuth authentication
+   - Validates connectivity and SSH access
+   - Tests network connectivity from bastion
+   - Verifies proper teardown and cleanup
+   - Run manually via workflow_dispatch or automatically on push/PR
+
+2. **test-authkey.yaml** - Legacy authentication test
+
+   - Tests bastion setup with legacy auth keys
+   - Validates backward compatibility
+   - Run manually via workflow_dispatch
+
+3. **test-error-handling.yaml** - Error scenario tests
+   - Tests timeout behavior and auto-cleanup
+   - Tests invalid credentials handling
+   - Tests missing Tailscale authentication
+   - Run manually via workflow_dispatch with scenario selection
+
+### Running Tests Locally
+
+To run tests manually:
+
+```bash
+# Run complete setup/teardown test
+gh workflow run test-bastion-setup.yaml
+
+# Run auth key compatibility test
+gh workflow run test-authkey.yaml
+
+# Run error handling tests
+gh workflow run test-error-handling.yaml -f test_scenario=timeout
+gh workflow run test-error-handling.yaml -f test_scenario=invalid_credentials
+gh workflow run test-error-handling.yaml -f test_scenario=network_error
+```
+
+### Test Coverage
+
+The test suite validates:
+
+- ✅ Bastion host creation and initialization
+- ✅ Tailscale network connectivity (OAuth and auth key methods)
+- ✅ SSH connectivity and command execution
+- ✅ Network connectivity from bastion
+- ✅ Proper cleanup and resource deletion
+- ✅ Timeout handling and auto-cleanup
+- ✅ Error handling for invalid credentials
+- ✅ Graceful failure scenarios
 
 ## Support
 
