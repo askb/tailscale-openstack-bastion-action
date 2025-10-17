@@ -14,21 +14,42 @@ This action requires Tailscale for secure connectivity between GitHub Actions ru
 
 ## Authentication Methods
 
-### OAuth Client (Recommended)
+### OAuth with Ephemeral Keys (Recommended)
 
-OAuth clients provide:
+The recommended approach combines OAuth authentication with automatic ephemeral key generation:
 
-- ✅ Better security with scoped permissions
-- ✅ Automatic token rotation
-- ✅ Audit logging
-- ✅ No manual key rotation
+**How it works:**
+
+1. GitHub runner authenticates to Tailscale using OAuth credentials
+2. Action automatically generates short-lived (1 hour) auth keys via Tailscale API
+3. Ephemeral keys are used to connect bastion hosts (one-time use)
+4. Bastion hosts are automatically removed from Tailscale when destroyed
+
+**Benefits:**
+
+- ✅ Best security with scoped OAuth permissions
+- ✅ No static auth keys to manage or rotate
+- ✅ Automatic cleanup of ephemeral devices
+- ✅ Short-lived credentials (1 hour expiry)
+- ✅ Audit logging via OAuth
+- ✅ Follows Tailscale security best practices
+
+### OAuth Only (For Runner)
+
+OAuth can be used for the GitHub runner, but requires a separate auth key for bastion hosts:
+
+- ✅ Better security with scoped permissions for runner
+- ✅ Automatic token rotation for runner
+- ⚠️ Requires manual management of bastion auth keys
+- ⚠️ Manual cleanup of bastion devices
 
 ### Auth Keys (Legacy)
 
-Auth keys are simpler but:
+Auth keys work for both runner and bastion but are deprecated:
 
 - ⚠️ Require manual rotation
 - ⚠️ Less granular permissions
+- ⚠️ Manual device cleanup required
 - ⚠️ Deprecated by Tailscale
 
 ---
@@ -119,15 +140,82 @@ Add these secrets:
 
 ### Step 4: Use in Workflow
 
+**Option 1: OAuth with Ephemeral Keys (Recommended)**
+
 ```yaml
-- uses: lfit/releng-packer-action@main
+- uses: lfreleng-actions/openstack-bastion-action@v1
   with:
-    mode: build
+    operation: setup
     tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
     tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+    tailscale_use_ephemeral_keys: "true" # Default - generates ephemeral keys
     tailscale_tags: "tag:ci,tag:bastion"
-    # ... other parameters
+    # ... OpenStack parameters
 ```
+
+The action will:
+
+1. Connect GitHub runner to Tailscale using OAuth
+2. Generate a short-lived (1 hour) ephemeral auth key via Tailscale API
+3. Use the ephemeral key in bastion cloud-init
+4. Bastion auto-removes from Tailscale when destroyed
+
+**Option 2: OAuth for Runner + Static Auth Key for Bastion**
+
+```yaml
+- uses: lfreleng-actions/openstack-bastion-action@v1
+  with:
+    operation: setup
+    tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+    tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+    tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }} # For bastion
+    tailscale_use_ephemeral_keys: "false" # Disable ephemeral key generation
+    tailscale_tags: "tag:ci,tag:bastion"
+    # ... OpenStack parameters
+```
+
+---
+
+## Understanding the Ephemeral Key Flow
+
+When using OAuth with ephemeral keys (`tailscale_use_ephemeral_keys: "true"`):
+
+### 1. GitHub Runner Connection
+
+- Runner authenticates to Tailscale using OAuth client ID/secret
+- Runner joins tailnet with tag `tag:ci`
+- OAuth tokens are automatically managed
+
+### 2. Ephemeral Key Generation
+
+- Action calls Tailscale API with OAuth credentials
+- Generates a unique, short-lived (1 hour) auth key
+- Key is configured as:
+  - **Ephemeral:** Device auto-removed when disconnected
+  - **Preauthorized:** No manual approval needed
+  - **Single-use:** Can only register one device
+  - **Tagged:** Inherits `tag:ci` and `tag:bastion`
+
+### 3. Bastion Provisioning
+
+- Ephemeral key injected into cloud-init script
+- Bastion uses key to join tailnet (one-time use)
+- Key expires after 1 hour or after first use
+
+### 4. Automatic Cleanup
+
+- Bastion destroyed → Device disconnects
+- Ephemeral device auto-removed from Tailscale
+- No manual cleanup required
+- Key cannot be reused
+
+### Security Benefits
+
+- ✅ **Zero static secrets for bastions:** Keys generated on-demand
+- ✅ **Automatic cleanup:** Ephemeral devices don't persist
+- ✅ **Short-lived credentials:** 1-hour expiry limits exposure
+- ✅ **Single-use keys:** Cannot be intercepted and reused
+- ✅ **Audit trail:** All API calls logged via OAuth
 
 ---
 

@@ -88,16 +88,51 @@ jobs:
 
 ### Tailscale Authentication (for setup operation)
 
-**Option 1: OAuth (Recommended)**
-| Input | Description |
-|-------|-------------|
-| `tailscale_oauth_client_id` | Tailscale OAuth client ID |
-| `tailscale_oauth_secret` | Tailscale OAuth client secret |
+**Option 1: OAuth with Ephemeral Keys (Recommended)**
 
-**Option 2: Auth Key (Legacy)**
-| Input | Description |
-|-------|-------------|
-| `tailscale_auth_key` | Tailscale authentication key |
+The recommended approach uses OAuth to generate short-lived, ephemeral auth keys for the bastion host:
+
+| Input                          | Description                                          |
+| ------------------------------ | ---------------------------------------------------- |
+| `tailscale_oauth_client_id`    | Tailscale OAuth client ID                            |
+| `tailscale_oauth_secret`       | Tailscale OAuth client secret                        |
+| `tailscale_use_ephemeral_keys` | Generate ephemeral keys from OAuth (default: `true`) |
+
+**How it works:**
+
+1. GitHub runner connects to Tailscale using OAuth credentials
+2. Action generates a short-lived (1 hour), ephemeral auth key via Tailscale API
+3. Ephemeral key is injected into bastion cloud-init for secure, one-time use
+4. Bastion automatically removed from Tailscale when destroyed
+
+**Benefits:**
+
+- ✅ No static auth keys to manage or rotate
+- ✅ Automatic cleanup of bastion devices from Tailscale
+- ✅ Short-lived credentials (1 hour expiry)
+- ✅ Ephemeral devices don't persist in your tailnet
+- ✅ Follows Tailscale security best practices
+
+**Option 2: Direct OAuth (GitHub Runner Only)**
+
+OAuth can be used directly for the GitHub runner, but requires a static auth key for the bastion:
+
+| Input                          | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
+| `tailscale_oauth_client_id`    | Tailscale OAuth client ID (for runner)             |
+| `tailscale_oauth_secret`       | Tailscale OAuth client secret (for runner)         |
+| `tailscale_auth_key`           | Static auth key for bastion host                   |
+| `tailscale_use_ephemeral_keys` | Set to `false` to disable ephemeral key generation |
+
+**Option 3: Auth Key Only (Legacy)**
+
+Both runner and bastion use the same static auth key:
+
+| Input                | Description                                                |
+| -------------------- | ---------------------------------------------------------- |
+| `tailscale_auth_key` | Tailscale authentication key (for both runner and bastion) |
+
+**⚠️ Not recommended:** Requires managing static auth keys and manual device cleanup.
 
 ### Optional Inputs
 

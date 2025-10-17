@@ -22,6 +22,7 @@ TAILSCALE_OAUTH_CLIENT_ID="${TAILSCALE_OAUTH_CLIENT_ID:-}"
 TAILSCALE_OAUTH_SECRET="${TAILSCALE_OAUTH_SECRET:-}"
 TAILSCALE_AUTH_KEY="${TAILSCALE_AUTH_KEY:-}"
 TAILSCALE_TAGS="${TAILSCALE_TAGS:-tag:ci}"
+TAILSCALE_USE_EPHEMERAL_KEYS="${TAILSCALE_USE_EPHEMERAL_KEYS:-true}"
 
 # Logging function
 log() {
@@ -58,15 +59,44 @@ generate_cloud_init() {
 
     # Determine which Tailscale authentication to use
     local tailscale_auth_cmd
+
     if [[ -n "${TAILSCALE_AUTH_KEY}" ]]; then
+        # Use provided auth key (explicit or legacy method)
+        log "Using provided auth key for bastion authentication"
         tailscale_auth_cmd="--authkey=${TAILSCALE_AUTH_KEY}"
-    elif [[ -n "${TAILSCALE_OAUTH_CLIENT_ID}" ]] && [[ -n "${TAILSCALE_OAUTH_SECRET}" ]]; then
-        # OAuth cannot be used directly in cloud-init, we need an auth key
-        error "Error: Bastion requires tailscale_auth_key. OAuth can only be used for the GitHub runner."
-        error "Please provide tailscale_auth_key input for bastion authentication."
+    elif [[ -n "${TAILSCALE_OAUTH_CLIENT_ID}" ]] && [[ -n "${TAILSCALE_OAUTH_SECRET}" ]] && [[ "${TAILSCALE_USE_EPHEMERAL_KEYS}" == "true" ]]; then
+        # Generate ephemeral auth key from OAuth (recommended method)
+        log "Generating ephemeral auth key from OAuth credentials (recommended)..."
+
+        local script_dir
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        local ephemeral_key
+
+        if ! ephemeral_key=$("${script_dir}/generate-ephemeral-key.sh" 2>&1 | tail -1); then
+            error "Failed to generate ephemeral auth key from OAuth"
+            return 1
+        fi
+
+        if [[ -z "${ephemeral_key}" || "${ephemeral_key}" == "null" ]]; then
+            error "Generated auth key is empty"
+            return 1
+        fi
+
+        log "✅ Successfully generated ephemeral auth key"
+        tailscale_auth_cmd="--authkey=${ephemeral_key}"
+    elif [[ -n "${TAILSCALE_OAUTH_CLIENT_ID}" ]] && [[ -n "${TAILSCALE_OAUTH_SECRET}" ]] && [[ "${TAILSCALE_USE_EPHEMERAL_KEYS}" == "false" ]]; then
+        # OAuth without ephemeral keys - not supported for bastion
+        error "Error: OAuth without ephemeral keys is not supported for bastion hosts"
+        error "The bastion (cloud-init) cannot use OAuth directly."
+        error "Please either:"
+        error "  - Set tailscale_use_ephemeral_keys: true (recommended)"
+        error "  - Provide tailscale_auth_key (legacy)"
         return 1
     else
-        error "Error: No Tailscale authentication provided for bastion"
+        error "Error: No valid Tailscale authentication provided for bastion"
+        error "Please provide either:"
+        error "  - tailscale_oauth_client_id + tailscale_oauth_secret (recommended)"
+        error "  - tailscale_auth_key (legacy)"
         return 1
     fi
 
