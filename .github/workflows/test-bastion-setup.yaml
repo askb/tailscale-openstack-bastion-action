@@ -8,8 +8,18 @@ name: Test Bastion Setup and Teardown
 on:
   push:
     branches: [main, master]
+    paths:
+      - "scripts/**"
+      - "cloud-init/**"
+      - "action.yaml"
+      - ".github/workflows/test-bastion-setup.yaml"
   pull_request:
     branches: [main, master]
+    paths:
+      - "scripts/**"
+      - "cloud-init/**"
+      - "action.yaml"
+      - ".github/workflows/test-bastion-setup.yaml"
   workflow_dispatch:
     inputs:
       bastion_flavor:
@@ -32,18 +42,6 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    branches: [main]
-    paths:
-      - "scripts/**"
-      - "cloud-init/**"
-      - "action.yaml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "scripts/**"
-      - "cloud-init/**"
-      - "action.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
