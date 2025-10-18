@@ -6,6 +6,10 @@ name: Test Bastion with Legacy Auth Key
 
 # yamllint disable-line rule:truthy
 on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       debug_mode:

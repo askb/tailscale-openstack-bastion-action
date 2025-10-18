@@ -6,6 +6,10 @@ name: Test Bastion Setup and Teardown
 
 # yamllint disable-line rule:truthy
 on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       bastion_flavor:

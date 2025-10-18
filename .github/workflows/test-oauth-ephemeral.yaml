@@ -5,6 +5,10 @@
 name: Test OAuth with Ephemeral Keys
 
 on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       bastion_flavor:
