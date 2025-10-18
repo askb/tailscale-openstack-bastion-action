@@ -42,7 +42,7 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:ci
           hostname: test-timeout-${{ github.run_id }}
-          args: --ssh --accept-routes --accept-dns=false
+          args: --ssh --accept-dns=false
 
       - name: Test Bastion Setup with Very Short Timeout
         id: setup
