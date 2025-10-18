@@ -210,7 +210,7 @@ EOF
 
     if [[ "${DEBUG_MODE}" == "true" ]]; then
         log "Cloud-init configuration:"
-        cat "${cloud_init_file}" | tee -a "${LOG_FILE}"
+        cat "${cloud_init_file}" >&2
     fi
 
     echo "${cloud_init_file}"
