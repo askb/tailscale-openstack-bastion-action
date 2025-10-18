@@ -71,11 +71,19 @@ generate_cloud_init() {
         local script_dir
         script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
         local ephemeral_key
+        local temp_output
+        temp_output=$(mktemp)
 
-        if ! ephemeral_key=$("${script_dir}/generate-ephemeral-key.sh" 2>&1 | tail -1); then
+        if ! "${script_dir}/generate-ephemeral-key.sh" > "${temp_output}" 2>&1; then
             error "Failed to generate ephemeral auth key from OAuth"
+            error "Script output:"
+            cat "${temp_output}" >&2
+            rm -f "${temp_output}"
             return 1
         fi
+
+        ephemeral_key=$(tail -1 "${temp_output}")
+        rm -f "${temp_output}"
 
         if [[ -z "${ephemeral_key}" || "${ephemeral_key}" == "null" ]]; then
             error "Generated auth key is empty"
