@@ -280,7 +280,7 @@ OPENSTACK_NETWORK
 
 # Tailscale (for bastion host)
 TAILSCALE_OAUTH_CLIENT_ID
-YOUR_OAUTH_SECRET_VALUE
+TAILSCALE_OAUTH_SECRET
 
 # Optional: if using auth keys instead of OAuth
 TAILSCALE_AUTHKEY

@@ -39,7 +39,7 @@ jobs:
         uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.YOUR_OAUTH_SECRET_VALUE }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:ci
           hostname: test-timeout-${{ github.run_id }}
           args: --ssh --accept-routes --accept-dns=false
@@ -62,7 +62,7 @@ jobs:
           bastion_name: ${{ env.BASTION_NAME }}
           bastion_wait_timeout: "30" # Very short timeout to trigger timeout
           tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          tailscale_oauth_secret: ${{ secrets.YOUR_OAUTH_SECRET_VALUE }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tailscale_tags: "tag:bastion"
           debug_mode: "true"
 
@@ -146,7 +146,7 @@ jobs:
           openstack_region: "invalid-region"
           bastion_name: ${{ env.BASTION_NAME }}
           tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          tailscale_oauth_secret: ${{ secrets.YOUR_OAUTH_SECRET_VALUE }}
+          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
 
       - name: Verify Error Handling
         run: |
