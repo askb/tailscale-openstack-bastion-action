@@ -63,10 +63,10 @@ get_tailnet() {
     if response=$(curl -s -X GET \
         "https://api.tailscale.com/api/v2/tailnet" \
         -H "Authorization: Bearer ${access_token}" 2>&1); then
-        
+
         local tailnet
         tailnet=$(echo "${response}" | jq -r '.[0]' 2>/dev/null || echo "")
-        
+
         if [[ -n "${tailnet}" && "${tailnet}" != "null" ]]; then
             log "Found tailnet: ${tailnet}"
             echo "${tailnet}"
