@@ -74,7 +74,7 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:ci
           hostname: test-oauth-ephemeral-runner-${{ github.run_id }}
-          args: --ssh --accept-routes --accept-dns=false
+          args: --ssh --accept-dns=false
 
       - name: Verify Runner Tailscale Connection
         run: |
@@ -143,7 +143,7 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:ci
           hostname: test-oauth-connectivity-${{ github.run_id }}
-          args: --ssh --accept-routes --accept-dns=false
+          args: --ssh --accept-dns=false
 
       - name: Wait for Bastion in Tailscale Network
         run: |
@@ -239,7 +239,7 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           tags: tag:ci
           hostname: test-oauth-teardown-${{ github.run_id }}
-          args: --ssh --accept-routes --accept-dns=false
+          args: --ssh --accept-dns=false
 
       - name: Teardown bastion
         uses: ./

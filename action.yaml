@@ -120,7 +120,7 @@ runs:
         version: ${{ inputs.tailscale_version }}
         tags: ${{ inputs.tailscale_tags }}
         hostname: github-runner-${{ github.run_id }}
-        args: --ssh --accept-routes --accept-dns=false
+        args: --ssh --accept-dns=false
 
     - name: Setup Tailscale VPN (Auth Key - Legacy)
       if: inputs.operation == 'setup' && (inputs.tailscale_oauth_client_id == '' || inputs.tailscale_oauth_secret == '') && inputs.tailscale_auth_key != ''
@@ -129,7 +129,7 @@ runs:
         authkey: ${{ inputs.tailscale_auth_key }}
         version: ${{ inputs.tailscale_version }}
         hostname: github-runner-${{ github.run_id }}
-        args: --ssh --accept-routes --accept-dns=false
+        args: --ssh --accept-dns=false
 
     - name: Validate Tailscale credentials
       if: inputs.operation == 'setup'
