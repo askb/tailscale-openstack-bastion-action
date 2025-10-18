@@ -51,31 +51,32 @@ get_oauth_token() {
 }
 
 # Get tailnet from OAuth credentials
+# The tailnet can be extracted from the client ID (format: <client-id>@<tailnet>)
+# Or we can use '-' which is a special value that means "the tailnet the auth is for"
 get_tailnet() {
     local access_token="$1"
 
     log "Getting tailnet information..."
 
+    # Try to get tailnet from API first
     local response
-    if ! response=$(curl -s -f -X GET \
+    if response=$(curl -s -X GET \
         "https://api.tailscale.com/api/v2/tailnet" \
         -H "Authorization: Bearer ${access_token}" 2>&1); then
-        error "Failed to get tailnet information"
-        error "Response: ${response}"
-        return 1
+        
+        local tailnet
+        tailnet=$(echo "${response}" | jq -r '.[0]' 2>/dev/null || echo "")
+        
+        if [[ -n "${tailnet}" && "${tailnet}" != "null" ]]; then
+            log "Found tailnet: ${tailnet}"
+            echo "${tailnet}"
+            return 0
+        fi
     fi
 
-    # Get the first tailnet (usually there's only one)
-    local tailnet
-    tailnet=$(echo "${response}" | jq -r '.[0]')
-
-    if [[ -z "${tailnet}" || "${tailnet}" == "null" ]]; then
-        error "Failed to extract tailnet from response"
-        error "Response: ${response}"
-        return 1
-    fi
-
-    echo "${tailnet}"
+    # Fallback: Use '-' which represents the tailnet associated with the OAuth client
+    log "Using '-' (OAuth client's tailnet) as fallback"
+    echo "-"
 }
 
 # Generate ephemeral auth key
