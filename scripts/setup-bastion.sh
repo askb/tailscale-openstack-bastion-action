@@ -148,13 +148,7 @@ write_files:
 
       # Start Tailscale
       echo "[$(date)] Starting Tailscale..." | tee -a /var/log/bastion-init.log
-      tailscale up \
-        TAILSCALE_AUTH_PLACEHOLDER \
-        --hostname="BASTION_HOSTNAME_PLACEHOLDER" \
-        --advertise-tags=TAILSCALE_TAGS_PLACEHOLDER \
-        --ssh \
-        --accept-routes \
-        --accept-dns=false
+      tailscale up TAILSCALE_AUTH_PLACEHOLDER --hostname="BASTION_HOSTNAME_PLACEHOLDER" --advertise-tags=TAILSCALE_TAGS_PLACEHOLDER --ssh --accept-routes --accept-dns=false
 
       TAILSCALE_IP=$(tailscale ip -4)
       echo "[$(date)] Tailscale connected: ${TAILSCALE_IP}" | tee -a /var/log/bastion-init.log
