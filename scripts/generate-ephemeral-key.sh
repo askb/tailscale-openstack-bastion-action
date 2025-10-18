@@ -32,7 +32,7 @@ get_oauth_token() {
         "https://api.tailscale.com/api/v2/oauth/token" \
         -u "${TAILSCALE_OAUTH_CLIENT_ID}:${TAILSCALE_OAUTH_SECRET}" \
         -d "grant_type=client_credentials" \
-        -d "scope=devices" 2>&1); then
+        -d "scope=auth_keys" 2>&1); then
         error "Failed to get OAuth token"
         error "Response: ${response}"
         return 1
