@@ -118,7 +118,7 @@ runs:
         oauth-client-id: ${{ inputs.tailscale_oauth_client_id }}
         oauth-secret: ${{ inputs.tailscale_oauth_secret }}
         version: ${{ inputs.tailscale_version }}
-        tags: ${{ inputs.tailscale_tags }}
+        tags: tag:ci
         hostname: github-runner-${{ github.run_id }}
         args: --ssh --accept-dns=false
 
