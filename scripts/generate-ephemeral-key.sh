@@ -11,7 +11,7 @@ TAILSCALE_OAUTH_CLIENT_ID="${TAILSCALE_OAUTH_CLIENT_ID:?Error: TAILSCALE_OAUTH_C
 TAILSCALE_OAUTH_SECRET="${TAILSCALE_OAUTH_SECRET:?Error: TAILSCALE_OAUTH_SECRET not set}"
 TAILSCALE_TAGS="${TAILSCALE_TAGS:-tag:ci}"
 KEY_EXPIRY="${KEY_EXPIRY:-3600}" # 1 hour default
-EPHEMERAL="${EPHEMERAL:-true}"
+EPHEMERAL="${EPHEMERAL:-false}"  # Changed to false for production reliability - bastion nodes need to survive network disconnects
 PREAUTH="${PREAUTH:-true}"
 
 # Logging function

@@ -186,33 +186,34 @@ When using OAuth with ephemeral keys (`tailscale_use_ephemeral_keys: "true"`):
 - Runner joins tailnet with tag `tag:ci`
 - OAuth tokens are automatically managed
 
-### 2. Ephemeral Key Generation
+### 2. Auth Key Generation
 
 - Action calls Tailscale API with OAuth credentials
 - Generates a unique, short-lived (1 hour) auth key
 - Key is configured as:
-  - **Ephemeral:** Device auto-removed when disconnected
+  - **Persistent Nodes:** Devices survive network disconnects (reliable for bastion use)
   - **Preauthorized:** No manual approval needed
   - **Reusable:** Can retry registration if initial connection fails
   - **Tagged:** Inherits `tag:ci` and `tag:bastion`
 
 ### 3. Bastion Provisioning
 
-- Ephemeral key injected into cloud-init script
+- Auth key injected into cloud-init script
 - Bastion uses key to join tailnet (reusable for retries)
 - Key expires after 1 hour or when no longer needed
+- Node persists through network disconnects for build reliability
 
 ### 4. Automatic Cleanup
 
-- Bastion destroyed → Device disconnects
-- Ephemeral device auto-removed from Tailscale
+- Bastion destroyed → OpenStack VM deleted
+- Tailscale node removed during teardown operation
 - No manual cleanup required
 - Key expires after 1 hour
 
 ### Security Benefits
 
 - ✅ **Zero static secrets for bastions:** Keys generated on-demand
-- ✅ **Automatic cleanup:** Ephemeral devices don't persist
+- ✅ **Automatic cleanup:** Nodes removed with bastion VM teardown
 - ✅ **Short-lived credentials:** 1-hour expiry limits exposure
 - ✅ **Reusable for retries:** Handles transient network issues during setup
 - ✅ **Audit trail:** All API calls logged via OAuth
@@ -227,7 +228,7 @@ When using OAuth with ephemeral keys (`tailscale_use_ephemeral_keys: "true"`):
 2. Click **"Generate auth key"**
 3. Configure settings:
    - **Description:** `GitHub Actions - Bastion Hosts`
-   - ✅ **Ephemeral** - Devices auto-remove when disconnected
+   - ⚠️ **Ephemeral** - UNCHECK this (persistent nodes needed for bastion reliability)
    - ✅ **Reusable** - Use for multiple workflow runs
    - ✅ **Pre-authorized** - Skip manual approval
    - **Tags:** `tag:bastion`
