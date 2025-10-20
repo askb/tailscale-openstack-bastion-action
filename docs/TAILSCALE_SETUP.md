@@ -22,7 +22,7 @@ The recommended approach combines OAuth authentication with automatic ephemeral 
 
 1. GitHub runner authenticates to Tailscale using OAuth credentials
 2. Action automatically generates short-lived (1 hour) auth keys via Tailscale API
-3. Ephemeral keys are used to connect bastion hosts (one-time use)
+3. Ephemeral keys are used to connect bastion hosts (reusable for retries)
 4. Bastion hosts are automatically removed from Tailscale when destroyed
 
 **Benefits:**
@@ -193,28 +193,28 @@ When using OAuth with ephemeral keys (`tailscale_use_ephemeral_keys: "true"`):
 - Key is configured as:
   - **Ephemeral:** Device auto-removed when disconnected
   - **Preauthorized:** No manual approval needed
-  - **Single-use:** Can only register one device
+  - **Reusable:** Can retry registration if initial connection fails
   - **Tagged:** Inherits `tag:ci` and `tag:bastion`
 
 ### 3. Bastion Provisioning
 
 - Ephemeral key injected into cloud-init script
-- Bastion uses key to join tailnet (one-time use)
-- Key expires after 1 hour or after first use
+- Bastion uses key to join tailnet (reusable for retries)
+- Key expires after 1 hour or when no longer needed
 
 ### 4. Automatic Cleanup
 
 - Bastion destroyed → Device disconnects
 - Ephemeral device auto-removed from Tailscale
 - No manual cleanup required
-- Key cannot be reused
+- Key expires after 1 hour
 
 ### Security Benefits
 
 - ✅ **Zero static secrets for bastions:** Keys generated on-demand
 - ✅ **Automatic cleanup:** Ephemeral devices don't persist
 - ✅ **Short-lived credentials:** 1-hour expiry limits exposure
-- ✅ **Single-use keys:** Cannot be intercepted and reused
+- ✅ **Reusable for retries:** Handles transient network issues during setup
 - ✅ **Audit trail:** All API calls logged via OAuth
 
 ---
