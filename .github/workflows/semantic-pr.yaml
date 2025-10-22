@@ -36,6 +36,8 @@ jobs:
             chore
             revert
           requireScope: false
+          ignoreLabels: |
+            dependencies
           subjectPattern: ^(?![A-Z]).+$
           subjectPatternError: |
             The subject "{subject}" found in the pull request title "{title}"
