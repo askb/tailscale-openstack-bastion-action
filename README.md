@@ -1,21 +1,26 @@
+<!--
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: 2025 The Linux Foundation
+-->
+
 # OpenStack Bastion with Tailscale Action
 
 A GitHub Action to setup and teardown OpenStack bastion hosts with Tailscale VPN for secure remote access. This action creates ephemeral bastion hosts that connect to your Tailscale network, enabling secure SSH access to OpenStack instances from GitHub Actions runners.
 
 ## Features
 
-- 🔒 **Secure Access**: Uses Tailscale VPN for encrypted, zero-trust networking
-- ☁️ **Cloud-Native**: Built for OpenStack cloud environments
-- ⚡ **Ephemeral**: Automatic bastion creation and cleanup
-- 🛡️ **Fail-Safe**: Automatic cleanup on timeout or failure
-- 🔑 **Flexible Auth**: Supports both OAuth (recommended) and legacy auth keys
-- 📊 **Detailed Logging**: Comprehensive logs for debugging
+-   🔒 **Secure Access**: Uses Tailscale VPN for encrypted, zero-trust networking
+-   ☁️ **Cloud-Native**: Built for OpenStack cloud environments
+-   ⚡ **Ephemeral**: Automatic bastion creation and cleanup
+-   🛡️ **Fail-Safe**: Automatic cleanup on timeout or failure
+-   🔑 **Flexible Auth**: Supports both OAuth (recommended) and legacy auth keys
+-   📊 **Detailed Logging**: Comprehensive logs for debugging
 
 ## Prerequisites
 
-- OpenStack cloud account with necessary permissions
-- Tailscale account with configured ACLs
-- GitHub repository secrets configured (see Configuration section)
+-   OpenStack cloud account with necessary permissions
+-   Tailscale account with configured ACLs
+-   GitHub repository secrets configured (see Configuration section)
 
 ## Usage
 
@@ -23,39 +28,39 @@ A GitHub Action to setup and teardown OpenStack bastion hosts with Tailscale VPN
 
 ```yaml
 jobs:
-  my-job:
-    runs-on: ubuntu-latest
-    steps:
-      # Setup bastion
-      - name: Setup bastion
-        id: bastion
-        uses: lfreleng-actions/openstack-bastion-action@v1
-        with:
-          operation: setup
-          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
-          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
-          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
-          tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+    my-job:
+        runs-on: ubuntu-latest
+        steps:
+            # Setup bastion
+            - name: Setup bastion
+              id: bastion
+              uses: lfreleng-actions/openstack-bastion-action@v1
+              with:
+                  operation: setup
+                  openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+                  openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+                  openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+                  openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+                  tailscale_oauth_client_id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+                  tailscale_oauth_secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
 
-      # Use bastion
-      - name: Use bastion for remote operations
-        run: |
-          echo "Bastion IP: ${{ steps.bastion.outputs.bastion_ip }}"
-          # Your operations here
+            # Use bastion
+            - name: Use bastion for remote operations
+              run: |
+                  echo "Bastion IP: ${{ steps.bastion.outputs.bastion_ip }}"
+                  # Your operations here
 
-      # Always cleanup
-      - name: Cleanup bastion
-        if: always()
-        uses: lfreleng-actions/openstack-bastion-action@v1
-        with:
-          operation: teardown
-          bastion_name: ${{ steps.bastion.outputs.bastion_name }}
-          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
-          openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
-          openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
-          openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
+            # Always cleanup
+            - name: Cleanup bastion
+              if: always()
+              uses: lfreleng-actions/openstack-bastion-action@v1
+              with:
+                  operation: teardown
+                  bastion_name: ${{ steps.bastion.outputs.bastion_name }}
+                  openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+                  openstack_project_id: ${{ secrets.OPENSTACK_PROJECT_ID }}
+                  openstack_username: ${{ secrets.OPENSTACK_USERNAME }}
+                  openstack_password: ${{ secrets.OPENSTACK_PASSWORD }}
 ```
 
 ### With Custom Configuration
@@ -64,14 +69,14 @@ jobs:
 - name: Setup bastion with custom settings
   uses: lfreleng-actions/openstack-bastion-action@v1
   with:
-    operation: setup
-    bastion_flavor: v3-standard-4
-    bastion_image: "Ubuntu 24.04 LTS"
-    bastion_network: custom-network
-    bastion_wait_timeout: 600
-    tailscale_tags: tag:ci,tag:bastion
-    debug_mode: true
-    # ... OpenStack credentials
+      operation: setup
+      bastion_flavor: v3-standard-4
+      bastion_image: "Ubuntu 24.04 LTS"
+      bastion_network: custom-network
+      bastion_wait_timeout: 600
+      tailscale_tags: tag:ci,tag:bastion
+      debug_mode: true
+      # ... OpenStack credentials
 ```
 
 ## Inputs
@@ -107,11 +112,11 @@ The recommended approach uses OAuth to generate short-lived, ephemeral auth keys
 
 **Benefits:**
 
-- ✅ No static auth keys to manage or rotate
-- ✅ Automatic cleanup of bastion devices from Tailscale
-- ✅ Short-lived credentials (1 hour expiry)
-- ✅ Ephemeral devices don't persist in your tailnet
-- ✅ Follows Tailscale security best practices
+-   ✅ No static auth keys to manage or rotate
+-   ✅ Automatic cleanup of bastion devices from Tailscale
+-   ✅ Short-lived credentials (1 hour expiry)
+-   ✅ Ephemeral devices don't persist in your tailnet
+-   ✅ Follows Tailscale security best practices
 
 **Option 2: Direct OAuth (GitHub Runner Only)**
 
@@ -166,21 +171,21 @@ Configure these secrets in your GitHub repository:
 
 #### Required Secrets
 
-- `OPENSTACK_AUTH_URL`: OpenStack authentication endpoint
-- `OPENSTACK_PROJECT_ID`: OpenStack project/tenant ID
-- `OPENSTACK_USERNAME`: OpenStack username
-- `OPENSTACK_PASSWORD` or `OPENSTACK_PASSWORD_B64`: OpenStack password (plain or base64 encoded)
+-   `OPENSTACK_AUTH_URL`: OpenStack authentication endpoint
+-   `OPENSTACK_PROJECT_ID`: OpenStack project/tenant ID
+-   `OPENSTACK_USERNAME`: OpenStack username
+-   `OPENSTACK_PASSWORD` or `OPENSTACK_PASSWORD_B64`: OpenStack password (plain or base64 encoded)
 
 #### Tailscale Secrets (choose one method)
 
 **OAuth Method (Recommended)**
 
-- `TAILSCALE_OAUTH_CLIENT_ID`: OAuth client ID
-- `TAILSCALE_OAUTH_SECRET`: OAuth client secret
+-   `TAILSCALE_OAUTH_CLIENT_ID`: OAuth client ID
+-   `TAILSCALE_OAUTH_SECRET`: OAuth client secret
 
 **Auth Key Method (Legacy)**
 
-- `TAILSCALE_AUTH_KEY`: Authentication key
+-   `TAILSCALE_AUTH_KEY`: Authentication key
 
 ### Tailscale ACL Configuration
 
@@ -188,30 +193,30 @@ Your Tailscale ACL must include:
 
 ```json
 {
-  "tagOwners": {
-    "tag:ci": ["autogroup:admin", "autogroup:owner", "tag:ci"],
-    "tag:bastion": [
-      "autogroup:admin",
-      "autogroup:owner",
-      "tag:ci",
-      "tag:bastion"
+    "tagOwners": {
+        "tag:ci": ["autogroup:admin", "autogroup:owner", "tag:ci"],
+        "tag:bastion": [
+            "autogroup:admin",
+            "autogroup:owner",
+            "tag:ci",
+            "tag:bastion"
+        ]
+    },
+    "acls": [
+        {
+            "action": "accept",
+            "src": ["autogroup:admin", "tag:ci", "tag:bastion"],
+            "dst": ["*:*"]
+        }
+    ],
+    "ssh": [
+        {
+            "action": "accept",
+            "src": ["autogroup:member", "tag:ci"],
+            "dst": ["tag:bastion"],
+            "users": ["root", "ubuntu", "autogroup:nonroot"]
+        }
     ]
-  },
-  "acls": [
-    {
-      "action": "accept",
-      "src": ["autogroup:admin", "tag:ci", "tag:bastion"],
-      "dst": ["*:*"]
-    }
-  ],
-  "ssh": [
-    {
-      "action": "accept",
-      "src": ["autogroup:member", "tag:ci"],
-      "dst": ["tag:bastion"],
-      "users": ["root", "ubuntu", "autogroup:nonroot"]
-    }
-  ]
 }
 ```
 
@@ -221,16 +226,16 @@ See [Tailscale Setup Guide](docs/TAILSCALE_SETUP.md) for detailed configuration.
 
 1. **Setup Operation**:
 
-   - Connects GitHub Actions runner to Tailscale network
-   - Creates cloud-init configuration with Tailscale setup
-   - Launches OpenStack instance with cloud-init
-   - Waits for bastion to join Tailscale network
-   - Returns bastion Tailscale IP for secure access
-   - Automatic cleanup if setup times out
+    - Connects GitHub Actions runner to Tailscale network
+    - Creates cloud-init configuration with Tailscale setup
+    - Launches OpenStack instance with cloud-init
+    - Waits for bastion to join Tailscale network
+    - Returns bastion Tailscale IP for secure access
+    - Automatic cleanup if setup times out
 
 2. **Teardown Operation**:
-   - Deletes the OpenStack bastion instance
-   - Verifies successful deletion
+    - Deletes the OpenStack bastion instance
+    - Verifies successful deletion
 
 ## Examples
 
@@ -252,23 +257,23 @@ This action includes comprehensive test workflows to validate functionality:
 
 1. **test-bastion-setup.yaml** - Complete lifecycle test
 
-   - Tests bastion setup with OAuth authentication
-   - Validates connectivity and SSH access
-   - Tests network connectivity from bastion
-   - Verifies proper teardown and cleanup
-   - Run manually via workflow_dispatch or automatically on push/PR
+    - Tests bastion setup with OAuth authentication
+    - Validates connectivity and SSH access
+    - Tests network connectivity from bastion
+    - Verifies proper teardown and cleanup
+    - Run manually via workflow_dispatch or automatically on push/PR
 
 2. **test-authkey.yaml** - Legacy authentication test
 
-   - Tests bastion setup with legacy auth keys
-   - Validates backward compatibility
-   - Run manually via workflow_dispatch
+    - Tests bastion setup with legacy auth keys
+    - Validates backward compatibility
+    - Run manually via workflow_dispatch
 
 3. **test-error-handling.yaml** - Error scenario tests
-   - Tests timeout behavior and auto-cleanup
-   - Tests invalid credentials handling
-   - Tests missing Tailscale authentication
-   - Run manually via workflow_dispatch with scenario selection
+    - Tests timeout behavior and auto-cleanup
+    - Tests invalid credentials handling
+    - Tests missing Tailscale authentication
+    - Run manually via workflow_dispatch with scenario selection
 
 ### Running Tests Locally
 
@@ -291,14 +296,14 @@ gh workflow run test-error-handling.yaml -f test_scenario=network_error
 
 The test suite validates:
 
-- ✅ Bastion host creation and initialization
-- ✅ Tailscale network connectivity (OAuth and auth key methods)
-- ✅ SSH connectivity and command execution
-- ✅ Network connectivity from bastion
-- ✅ Proper cleanup and resource deletion
-- ✅ Timeout handling and auto-cleanup
-- ✅ Error handling for invalid credentials
-- ✅ Graceful failure scenarios
+-   ✅ Bastion host creation and initialization
+-   ✅ Tailscale network connectivity (OAuth and auth key methods)
+-   ✅ SSH connectivity and command execution
+-   ✅ Network connectivity from bastion
+-   ✅ Proper cleanup and resource deletion
+-   ✅ Timeout handling and auto-cleanup
+-   ✅ Error handling for invalid credentials
+-   ✅ Graceful failure scenarios
 
 ## Support
 
