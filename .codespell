@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+# Codespell Configuration
+# Words to ignore during spell checking
+
+# Technical terms and acronyms
+ephemeral
+tailscale
+oauth
+bastion
+openstack
+gerrit
+ansible
+
+# Variable names and identifiers
+bashrc
+venv
+pyproject
+yamllint
+gitlint
+codespell
+editorconfig
+reusable
+
+# Common abbreviations
+compat
+auth
+keypair
+mgmt
+infra

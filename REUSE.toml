@@ -1,0 +1,13 @@
+version = 1
+
+[[annotations]]
+path = ["**.yaml", "**.yml", "**.md", "**.txt", "**.sh", "**.py", "**.toml", "**.ini"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 The Linux Foundation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [".gitignore", ".yamllint", ".gitlint", "LICENSE"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 The Linux Foundation"
+SPDX-License-Identifier = "Apache-2.0"
