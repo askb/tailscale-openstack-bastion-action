@@ -8,8 +8,8 @@ The Packer Action automatically sets up Ansible and installs required Ansible Ga
 
 ### 1. Python and Ansible
 
-- **Python 3.11**: Installed via `actions/setup-python@v5.6.0`
-- **Ansible ~=9.2.0**: Matches the version used in common-packer
+-   **Python 3.11**: Installed via `actions/setup-python@v5.6.0`
+-   **Ansible ~=9.2.0**: Matches the version used in common-packer
 
 ### 2. Ansible Galaxy Roles
 
@@ -21,21 +21,21 @@ From `common-packer/requirements.yaml`:
 
 ```yaml
 roles:
-  - src: lfit.docker-install
-  - src: lfit.haveged-install
-  - src: lfit.java-install
-  - src: lfit.lf-dev-libs
-  - src: lfit.lf-recommended-tools
-  - src: lfit.mono-install
-  - src: lfit.packer-install
-  - src: lfit.protobuf-install
-  - src: lfit.puppet-install
-  - src: lfit.python-install
-  - src: lfit.shellcheck-install
-  - src: lfit.sysstat-install
-  - src: lfit.system-update
+    - src: lfit.docker-install
+    - src: lfit.haveged-install
+    - src: lfit.java-install
+    - src: lfit.lf-dev-libs
+    - src: lfit.lf-recommended-tools
+    - src: lfit.mono-install
+    - src: lfit.packer-install
+    - src: lfit.protobuf-install
+    - src: lfit.puppet-install
+    - src: lfit.python-install
+    - src: lfit.shellcheck-install
+    - src: lfit.sysstat-install
+    - src: lfit.system-update
 collections:
-  - name: community.general
+    - name: community.general
 ```
 
 #### Project-Specific Roles (Optional)
@@ -50,8 +50,8 @@ Roles are installed to `.galaxy/` directory, which Packer can reference in its A
 
 The Ansible setup runs in **both modes**:
 
-- **Validate Mode**: Needed because Packer validation checks if Ansible provisioners can find their roles
-- **Build Mode**: Required for actual provisioning during image builds
+-   **Validate Mode**: Needed because Packer validation checks if Ansible provisioners can find their roles
+-   **Build Mode**: Required for actual provisioning during image builds
 
 ## How It Works
 
@@ -59,35 +59,35 @@ The Ansible setup runs in **both modes**:
 
 1. **Setup Python** (All modes)
 
-   ```yaml
-   - name: Setup Python
-     uses: actions/setup-python@v5.6.0
-     with:
-       python-version: "3.11"
-   ```
+    ```yaml
+    - name: Setup Python
+      uses: actions/setup-python@v5.6.0
+      with:
+          python-version: "3.11"
+    ```
 
 2. **Install Ansible** (All modes)
 
-   ```bash
-   python -m pip install --upgrade pip
-   pip install ansible~=9.2.0
-   ```
+    ```bash
+    python -m pip install --upgrade pip
+    pip install ansible~=9.2.0
+    ```
 
 3. **Install Galaxy Requirements** (All modes)
-   ```bash
-   # Auto-discover common-packer location
-   if [[ -d "common-packer" ]]; then
-     COMMON_PACKER_DIR="common-packer"
-   elif [[ -d "packer/common-packer" ]]; then
-     COMMON_PACKER_DIR="packer/common-packer"
-   fi
-   # Install common-packer requirements
-   ansible-galaxy install -p .galaxy -r "$COMMON_PACKER_DIR/requirements.yaml"
-   # Install project-specific requirements (if present)
-   if [[ -f "requirements.yaml" ]]; then
-     ansible-galaxy install -p .galaxy -r requirements.yaml
-   fi
-   ```
+    ```bash
+    # Auto-discover common-packer location
+    if [[ -d "common-packer" ]]; then
+      COMMON_PACKER_DIR="common-packer"
+    elif [[ -d "packer/common-packer" ]]; then
+      COMMON_PACKER_DIR="packer/common-packer"
+    fi
+    # Install common-packer requirements
+    ansible-galaxy install -p .galaxy -r "$COMMON_PACKER_DIR/requirements.yaml"
+    # Install project-specific requirements (if present)
+    if [[ -f "requirements.yaml" ]]; then
+      ansible-galaxy install -p .galaxy -r requirements.yaml
+    fi
+    ```
 
 ## Directory Structure
 
@@ -143,8 +143,8 @@ git submodule update --init --recursive
 
 **Solution**: The action expects one of these structures:
 
-- `packer_working_dir/common-packer/requirements.yaml`
-- `packer_working_dir/packer/common-packer/requirements.yaml`
+-   `packer_working_dir/common-packer/requirements.yaml`
+-   `packer_working_dir/packer/common-packer/requirements.yaml`
 
 Make sure `common-packer` is properly initialized.
 
@@ -197,9 +197,9 @@ ansible-galaxy install -p .galaxy -r requirements.yaml
 
 ## References
 
-- **Common-Packer**: `/home/abelur/git/lf-repos/common-packer/`
-- **JJB Packer Build**: `~/git/builder/global-jjb/shell/packer-build.sh`
-- **Ansible Galaxy Script**: `/home/abelur/git/lf-repos/common-packer/ansible-galaxy.sh`
-- **Galaxy Requirements**: `/home/abelur/git/lf-repos/common-packer/requirements.yaml`
+-   **Common-Packer**: `/home/abelur/git/lf-repos/common-packer/`
+-   **JJB Packer Build**: `~/git/builder/global-jjb/shell/packer-build.sh`
+-   **Ansible Galaxy Script**: `/home/abelur/git/lf-repos/common-packer/ansible-galaxy.sh`
+-   **Galaxy Requirements**: `/home/abelur/git/lf-repos/common-packer/requirements.yaml`
 
 Signed-off-by: Anil Belur <askb23@gmail.com>

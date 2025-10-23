@@ -56,16 +56,16 @@ Configure these in your repository: **Settings → Secrets and variables → Act
 
 **Tailscale OAuth Key Settings:**
 
-- **Devices:** Write access
-- **Ephemeral:** Recommended (auto-cleanup)
-- **Tags:** `tag:ci` for GitHub runner, `tag:bastion` for bastion host
+-   **Devices:** Write access
+-   **Ephemeral:** Recommended (auto-cleanup)
+-   **Tags:** `tag:ci` for GitHub runner, `tag:bastion` for bastion host
 
 **Tailscale Auth Key Settings:**
 
-- ✅ Ephemeral (bastion auto-removed after disconnect)
-- ✅ Reusable (multiple workflow runs)
-- ✅ Pre-approved (no manual approval needed)
-- Tags: `tag:bastion`
+-   ✅ Ephemeral (bastion auto-removed after disconnect)
+-   ✅ Reusable (multiple workflow runs)
+-   ✅ Pre-approved (no manual approval needed)
+-   Tags: `tag:bastion`
 
 ### OpenStack OpenStack Secrets
 
@@ -133,28 +133,28 @@ packer-jobs/
 
 1. **System Setup**
 
-   - Updates packages
-   - Installs required tools (curl, wget, jq, network tools)
-   - Enables IP forwarding for network routing
+    - Updates packages
+    - Installs required tools (curl, wget, jq, network tools)
+    - Enables IP forwarding for network routing
 
 2. **Tailscale Installation**
 
-   - Downloads and installs Tailscale
-   - Authenticates with auth key
-   - Joins Tailscale network with `tag:bastion`
-   - Enables Tailscale SSH for secure access
+    - Downloads and installs Tailscale
+    - Authenticates with auth key
+    - Joins Tailscale network with `tag:bastion`
+    - Enables Tailscale SSH for secure access
 
 3. **Packer Installation** (Optional)
 
-   - Can be enabled in cloud-init
-   - Adds HashiCorp repository
-   - Installs latest Packer version
-   - Ready for builds if running Packer on bastion
+    - Can be enabled in cloud-init
+    - Adds HashiCorp repository
+    - Installs latest Packer version
+    - Ready for builds if running Packer on bastion
 
 4. **Status Indicator**
-   - Creates `/tmp/bastion-ready` file
-   - Logs completion to `/var/log/bastion-init.log`
-   - Displays status in console
+    - Creates `/tmp/bastion-ready` file
+    - Logs completion to `/var/log/bastion-init.log`
+    - Displays status in console
 
 ### Cloud-Init Configuration Options
 
@@ -167,15 +167,15 @@ See `templates/bastion-cloud-init.yaml` for the full configuration.
 package_update: true
 packages: [curl]
 runcmd:
-  - curl -fsSL https://tailscale.com/install.sh | sh
-  - tailscale up --authkey="${TAILSCALE_AUTH_KEY}" --hostname="bastion-$RUN_ID" --ssh
+    - curl -fsSL https://tailscale.com/install.sh | sh
+    - tailscale up --authkey="${TAILSCALE_AUTH_KEY}" --hostname="bastion-$RUN_ID" --ssh
 ```
 
 **Full cloud-init (includes comprehensive setup):**
 
-- See `templates/bastion-cloud-init.yaml`
-- Includes network configuration, logging, ready markers
-- Used by default in workflow
+-   See `templates/bastion-cloud-init.yaml`
+-   Includes network configuration, logging, ready markers
+-   Used by default in workflow
 
 ---
 
@@ -242,20 +242,20 @@ Copy files to bastion and execute there:
 ```yaml
 - name: Run Packer on bastion
   run: |
-    # Copy Packer files to bastion
-    scp -r ./common-packer/ root@${BASTION_IP}:/root/build/
+      # Copy Packer files to bastion
+      scp -r ./common-packer/ root@${BASTION_IP}:/root/build/
 
-    # Copy cloud credentials
-    ssh root@${BASTION_IP} << 'ENDSSH'
-      export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
-      export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
-      export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
-      export OS_PROJECT_NAME="${{ secrets.OPENSTACK_PROJECT_NAME }}"
-      export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
+      # Copy cloud credentials
+      ssh root@${BASTION_IP} << 'ENDSSH'
+        export OS_AUTH_URL="${{ secrets.OPENSTACK_AUTH_URL }}"
+        export OS_USERNAME="${{ secrets.OPENSTACK_USERNAME }}"
+        export OS_PASSWORD="${{ secrets.OPENSTACK_PASSWORD }}"
+        export OS_PROJECT_NAME="${{ secrets.OPENSTACK_PROJECT_NAME }}"
+        export OS_REGION_NAME="${{ secrets.OPENSTACK_REGION }}"
 
-      cd /root/build/common-packer
-      packer build .
-    ENDSSH
+        cd /root/build/common-packer
+        packer build .
+      ENDSSH
 ```
 
 ---
@@ -270,16 +270,16 @@ bastion_flavor: "v3-starter-2" # Smaller for testing
 
 # Or in workflow env
 env:
-  OPENSTACK_FLAVOR: "v3-standard-4" # Larger for heavy builds
+    OPENSTACK_FLAVOR: "v3-standard-4" # Larger for heavy builds
 ```
 
 Available flavors:
 
-- `v3-starter-1` - 1 vCPU, 2GB RAM (smallest)
-- `v3-starter-2` - 1 vCPU, 4GB RAM
-- `v3-standard-2` - 2 vCPU, 8GB RAM (recommended)
-- `v3-standard-4` - 4 vCPU, 16GB RAM
-- `v3-standard-8` - 8 vCPU, 32GB RAM
+-   `v3-starter-1` - 1 vCPU, 2GB RAM (smallest)
+-   `v3-starter-2` - 1 vCPU, 4GB RAM
+-   `v3-standard-2` - 2 vCPU, 8GB RAM (recommended)
+-   `v3-standard-4` - 4 vCPU, 16GB RAM
+-   `v3-standard-8` - 8 vCPU, 32GB RAM
 
 ### 2. Use Different Base Image
 
@@ -296,14 +296,14 @@ bastion_image: "Ubuntu 24.04"    # Latest Ubuntu
 ```yaml
 - name: Launch bastion
   run: |
-    openstack server create \
-      --security-group allow-tailscale \
-      --security-group allow-ssh \
-      --flavor "${{ env.OPENSTACK_FLAVOR }}" \
-      --image "${{ env.OPENSTACK_IMAGE }}" \
-      --network "${{ env.OPENSTACK_NETWORK }}" \
-      --user-data cloud-init.yaml \
-      "${{ env.BASTION_NAME }}"
+      openstack server create \
+        --security-group allow-tailscale \
+        --security-group allow-ssh \
+        --flavor "${{ env.OPENSTACK_FLAVOR }}" \
+        --image "${{ env.OPENSTACK_IMAGE }}" \
+        --network "${{ env.OPENSTACK_NETWORK }}" \
+        --user-data cloud-init.yaml \
+        "${{ env.BASTION_NAME }}"
 ```
 
 ### 4. Persistent Bastion (Dev/Testing)
@@ -319,7 +319,7 @@ Keep bastion running for development:
 - name: Cleanup bastion instance
   if: false # Disable cleanup for testing
   run: |
-    openstack server delete "${{ env.BASTION_NAME }}"
+      openstack server delete "${{ env.BASTION_NAME }}"
 ```
 
 ---
@@ -351,10 +351,10 @@ sudo journalctl -u tailscaled
 
 **Common issues:**
 
-- Auth key expired → Generate new key
-- Network blocked → Check OpenStack security groups
-- Cloud-init failed → Check `/var/log/cloud-init.log`
-- Tailscale install failed → Check network connectivity
+-   Auth key expired → Generate new key
+-   Network blocked → Check OpenStack security groups
+-   Cloud-init failed → Check `/var/log/cloud-init.log`
+-   Tailscale install failed → Check network connectivity
 
 ### OpenStack Connection Failed
 
@@ -381,30 +381,30 @@ openstack image list
 
 1. Enable Packer debug mode:
 
-   ```yaml
-   env:
-     PACKER_LOG: 1
-   ```
+    ```yaml
+    env:
+        PACKER_LOG: 1
+    ```
 
 2. Test SSH to target from bastion:
 
-   ```bash
-   ssh root@${BASTION_IP}
-   # Then from bastion:
-   ssh -o StrictHostKeyChecking=no ubuntu@<target-instance-ip>
-   ```
+    ```bash
+    ssh root@${BASTION_IP}
+    # Then from bastion:
+    ssh -o StrictHostKeyChecking=no ubuntu@<target-instance-ip>
+    ```
 
 3. Check network connectivity:
 
-   ```bash
-   ssh root@${BASTION_IP} "ping -c 3 8.8.8.8"
-   ssh root@${BASTION_IP} "curl -I https://cloud-images.ubuntu.com"
-   ```
+    ```bash
+    ssh root@${BASTION_IP} "ping -c 3 8.8.8.8"
+    ssh root@${BASTION_IP} "curl -I https://cloud-images.ubuntu.com"
+    ```
 
 4. Verify bastion can reach OpenStack API:
-   ```bash
-   ssh root@${BASTION_IP} "curl -I https://auth.openstack.net"
-   ```
+    ```bash
+    ssh root@${BASTION_IP} "curl -I https://auth.openstack.net"
+    ```
 
 ### Workflow Timeout
 
@@ -412,8 +412,8 @@ openstack image list
 
 ```yaml
 jobs:
-  packer-build-openstack:
-    timeout-minutes: 90 # Increase from default
+    packer-build-openstack:
+        timeout-minutes: 90 # Increase from default
 ```
 
 **Add timeouts to specific steps:**
@@ -422,7 +422,7 @@ jobs:
 - name: Wait for bastion
   timeout-minutes: 10
   run: |
-    # wait commands
+      # wait commands
 ```
 
 ---
@@ -437,9 +437,9 @@ OPENSTACK_FLAVOR: "v3-starter-1" # $0.01/hour vs $0.08/hour
 
 ### 2. Enable Ephemeral Tailscale Devices
 
-- Auto-cleanup after disconnect
-- No manual device management
-- Recommended for CI/CD
+-   Auto-cleanup after disconnect
+-   No manual device management
+-   Recommended for CI/CD
 
 ### 3. Cleanup on Failure
 
@@ -452,8 +452,8 @@ OPENSTACK_FLAVOR: "v3-starter-1" # $0.01/hour vs $0.08/hour
 
 ```yaml
 strategy:
-  matrix:
-    os: [ubuntu-22, ubuntu-24, debian-12]
+    matrix:
+        os: [ubuntu-22, ubuntu-24, debian-12]
 # Single bastion serves all matrix builds
 ```
 
@@ -462,8 +462,8 @@ strategy:
 ```yaml
 # Separate workflow to clean orphaned bastions
 on:
-  schedule:
-    - cron: "0 * * * *" # Hourly cleanup
+    schedule:
+        - cron: "0 * * * *" # Hourly cleanup
 ```
 
 ---
@@ -475,22 +475,22 @@ on:
 
 ```json
 {
-  "tagOwners": {
-    "tag:ci": ["autogroup:admin"],
-    "tag:bastion": ["tag:ci"]
-  },
-  "acls": [
-    {
-      "action": "accept",
-      "src": ["tag:ci"],
-      "dst": ["tag:bastion:*"]
+    "tagOwners": {
+        "tag:ci": ["autogroup:admin"],
+        "tag:bastion": ["tag:ci"]
     },
-    {
-      "action": "accept",
-      "src": ["tag:bastion"],
-      "dst": ["*:*"]
-    }
-  ]
+    "acls": [
+        {
+            "action": "accept",
+            "src": ["tag:ci"],
+            "dst": ["tag:bastion:*"]
+        },
+        {
+            "action": "accept",
+            "src": ["tag:bastion"],
+            "dst": ["*:*"]
+        }
+    ]
 }
 ```
 
@@ -499,8 +499,8 @@ on:
 
 ```yaml
 jobs:
-  packer-build-openstack:
-    environment: production # Requires approval
+    packer-build-openstack:
+        environment: production # Requires approval
 ```
 
 ✅ **Enable audit logging** - Track all Tailscale connections
@@ -513,24 +513,24 @@ jobs:
 
 ### GitHub Actions
 
-- **Real-time logs:** Watch builds progress
-- **Artifact downloads:** Packer logs, bastion diagnostics
-- **Email notifications:** Build failures
-- **Status badges:** Display in README
+-   **Real-time logs:** Watch builds progress
+-   **Artifact downloads:** Packer logs, bastion diagnostics
+-   **Email notifications:** Build failures
+-   **Status badges:** Display in README
 
 ### Tailscale Admin Console
 
-- **Device connections:** See bastion appear/disappear
-- **Activity logs:** Track all VPN connections
-- **Network stats:** Bandwidth usage
-- **ACL violations:** Security alerts
+-   **Device connections:** See bastion appear/disappear
+-   **Activity logs:** Track all VPN connections
+-   **Network stats:** Bandwidth usage
+-   **ACL violations:** Security alerts
 
 ### OpenStack Dashboard
 
-- **Instance status:** Monitor bastion lifecycle
-- **Resource usage:** CPU, RAM, disk, network
-- **Billing:** Track costs per build
-- **Quotas:** Monitor usage limits
+-   **Instance status:** Monitor bastion lifecycle
+-   **Resource usage:** CPU, RAM, disk, network
+-   **Billing:** Track costs per build
+-   **Quotas:** Monitor usage limits
 
 ---
 
@@ -540,29 +540,29 @@ Run multiple Packer builds simultaneously with dedicated bastions:
 
 ```yaml
 strategy:
-  fail-fast: false
-  matrix:
-    os:
-      - name: ubuntu-22
-        image: "Ubuntu 22.04"
-      - name: ubuntu-24
-        image: "Ubuntu 24.04"
-      - name: debian-12
-        image: "Debian 12"
+    fail-fast: false
+    matrix:
+        os:
+            - name: ubuntu-22
+              image: "Ubuntu 22.04"
+            - name: ubuntu-24
+              image: "Ubuntu 24.04"
+            - name: debian-12
+              image: "Debian 12"
 
 env:
-  BASTION_NAME: "gh-bastion-${{ matrix.os.name }}-${{ github.run_id }}"
-  OPENSTACK_IMAGE: ${{ matrix.os.image }}
+    BASTION_NAME: "gh-bastion-${{ matrix.os.name }}-${{ github.run_id }}"
+    OPENSTACK_IMAGE: ${{ matrix.os.image }}
 ```
 
 Each matrix job gets its own ephemeral bastion!
 
 **Benefits:**
 
-- Parallel execution (faster total time)
-- Isolated environments
-- Independent cleanup
-- Matrix-specific configurations
+-   Parallel execution (faster total time)
+-   Isolated environments
+-   Independent cleanup
+-   Matrix-specific configurations
 
 ---
 
@@ -581,26 +581,26 @@ Each matrix job gets its own ephemeral bastion!
 
 ## Support & Resources
 
-- **Tailscale Docs:** https://tailscale.com/kb/
-- **OpenStack Docs:** https://docs.openstack.com/
-- **Packer Docs:** https://developer.hashicorp.com/packer/docs
-- **OpenStack CLI:** https://docs.openstack.org/python-openstackclient/
-- **GitHub Actions:** https://docs.github.com/en/actions
-- **Cloud-Init:** https://cloudinit.readthedocs.io/
+-   **Tailscale Docs:** https://tailscale.com/kb/
+-   **OpenStack Docs:** https://docs.openstack.com/
+-   **Packer Docs:** https://developer.hashicorp.com/packer/docs
+-   **OpenStack CLI:** https://docs.openstack.org/python-openstackclient/
+-   **GitHub Actions:** https://docs.github.com/en/actions
+-   **Cloud-Init:** https://cloudinit.readthedocs.io/
 
 ### Project Documentation
 
-- **Quick Start:** `docs/QUICK_START.md`
-- **Troubleshooting:** `docs/TROUBLESHOOTING.md`
-- **Cloud-Init Reference:** `docs/BASTION_CLOUD_INIT.md`
-- **Setup Checklist:** `CHECKLIST.md`
+-   **Quick Start:** `docs/QUICK_START.md`
+-   **Troubleshooting:** `docs/TROUBLESHOOTING.md`
+-   **Cloud-Init Reference:** `docs/BASTION_CLOUD_INIT.md`
+-   **Setup Checklist:** `CHECKLIST.md`
 
 ### Community Support
 
-- **GitHub Discussions:** Ask questions in this repository
-- **Tailscale Community:** https://forum.tailscale.com/
-- **OpenStack Support:** https://openstack.com/support/
-- **Packer Community:** https://discuss.hashicorp.com/c/packer/
+-   **GitHub Discussions:** Ask questions in this repository
+-   **Tailscale Community:** https://forum.tailscale.com/
+-   **OpenStack Support:** https://openstack.com/support/
+-   **Packer Community:** https://discuss.hashicorp.com/c/packer/
 
 ---
 

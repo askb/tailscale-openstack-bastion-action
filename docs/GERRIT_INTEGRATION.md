@@ -8,14 +8,14 @@ The action supports two modes designed for Gerrit-based development workflows:
 
 1. **Validate Mode** - Triggered on Gerrit verify (patchset-created events)
 
-   - Validates Packer syntax and configuration
-   - Runs quickly without creating infrastructure
-   - Used in pre-merge validation
+    - Validates Packer syntax and configuration
+    - Runs quickly without creating infrastructure
+    - Used in pre-merge validation
 
 2. **Build Mode** - Triggered on Gerrit merge or scheduled builds
-   - Creates actual images using bastion host
-   - Publishes images to cloud provider
-   - Used post-merge or for periodic rebuilds
+    - Creates actual images using bastion host
+    - Publishes images to cloud provider
+    - Used post-merge or for periodic rebuilds
 
 ## Prerequisites
 
@@ -79,76 +79,76 @@ Create `.github/workflows/gerrit-verify.yaml`:
 name: Gerrit Verify
 
 on:
-  workflow_dispatch:
-    inputs:
-      GERRIT_BRANCH:
-        required: true
-        type: string
-      # ... other Gerrit inputs
+    workflow_dispatch:
+        inputs:
+            GERRIT_BRANCH:
+                required: true
+                type: string
+            # ... other Gerrit inputs
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clear votes
-        uses: lfit/gerrit-review-action@v0.8
-        with:
-          host: ${{ vars.GERRIT_SERVER }}
-          username: ${{ vars.GERRIT_SSH_USER }}
-          key: ${{ secrets.GERRIT_SSH_PRIVKEY }}
-          known_hosts: ${{ vars.GERRIT_KNOWN_HOSTS }}
-          gerrit-change-number: ${{ inputs.GERRIT_CHANGE_NUMBER }}
-          gerrit-patchset-number: ${{ inputs.GERRIT_PATCHSET_NUMBER }}
-          vote-type: clear
+    prepare:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Clear votes
+              uses: lfit/gerrit-review-action@v0.8
+              with:
+                  host: ${{ vars.GERRIT_SERVER }}
+                  username: ${{ vars.GERRIT_SSH_USER }}
+                  key: ${{ secrets.GERRIT_SSH_PRIVKEY }}
+                  known_hosts: ${{ vars.GERRIT_KNOWN_HOSTS }}
+                  gerrit-change-number: ${{ inputs.GERRIT_CHANGE_NUMBER }}
+                  gerrit-patchset-number: ${{ inputs.GERRIT_PATCHSET_NUMBER }}
+                  vote-type: clear
 
-  packer-validator:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Gerrit Change
-        uses: lfit/checkout-gerrit-change-action@v0.9
-        with:
-          gerrit-refspec: ${{ inputs.GERRIT_REFSPEC }}
-          gerrit-project: ${{ inputs.GERRIT_PROJECT }}
-          gerrit-url: ${{ vars.GERRIT_URL }}
-          submodules: "true" # ← Important!
+    packer-validator:
+        needs: prepare
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Gerrit Change
+              uses: lfit/checkout-gerrit-change-action@v0.9
+              with:
+                  gerrit-refspec: ${{ inputs.GERRIT_REFSPEC }}
+                  gerrit-project: ${{ inputs.GERRIT_PROJECT }}
+                  gerrit-url: ${{ vars.GERRIT_URL }}
+                  submodules: "true" # ← Important!
 
-      - name: Update submodules
-        run: git submodule update --init
+            - name: Update submodules
+              run: git submodule update --init
 
-      - name: Check for packer changes
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            src:
-              - 'packer/**'
+            - name: Check for packer changes
+              uses: dorny/paths-filter@v3
+              id: changes
+              with:
+                  filters: |
+                      src:
+                        - 'packer/**'
 
-      - name: Validate Packer
-        if: steps.changes.outputs.src == 'true'
-        uses: lfit/packer-openstack-bastion-action@v1
-        with:
-          mode: validate
-          packer_template: "templates/builder.pkr.hcl"
-          packer_vars_file: "common-packer/vars/ubuntu-22.04.pkrvars.hcl"
-          packer_working_dir: "packer"
+            - name: Validate Packer
+              if: steps.changes.outputs.src == 'true'
+              uses: lfit/packer-openstack-bastion-action@v1
+              with:
+                  mode: validate
+                  packer_template: "templates/builder.pkr.hcl"
+                  packer_vars_file: "common-packer/vars/ubuntu-22.04.pkrvars.hcl"
+                  packer_working_dir: "packer"
 
-  vote:
-    if: always()
-    needs: [prepare, packer-validator]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: im-open/workflow-conclusion@v2.2.3
-      - name: Set vote
-        uses: lfit/gerrit-review-action@v0.8
-        with:
-          host: ${{ vars.GERRIT_SERVER }}
-          username: ${{ vars.GERRIT_SSH_USER }}
-          key: ${{ secrets.GERRIT_SSH_PRIVKEY }}
-          known_hosts: ${{ vars.GERRIT_KNOWN_HOSTS }}
-          gerrit-change-number: ${{ inputs.GERRIT_CHANGE_NUMBER }}
-          gerrit-patchset-number: ${{ inputs.GERRIT_PATCHSET_NUMBER }}
-          vote-type: ${{ env.WORKFLOW_CONCLUSION }}
+    vote:
+        if: always()
+        needs: [prepare, packer-validator]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: im-open/workflow-conclusion@v2.2.3
+            - name: Set vote
+              uses: lfit/gerrit-review-action@v0.8
+              with:
+                  host: ${{ vars.GERRIT_SERVER }}
+                  username: ${{ vars.GERRIT_SSH_USER }}
+                  key: ${{ secrets.GERRIT_SSH_PRIVKEY }}
+                  known_hosts: ${{ vars.GERRIT_KNOWN_HOSTS }}
+                  gerrit-change-number: ${{ inputs.GERRIT_CHANGE_NUMBER }}
+                  gerrit-patchset-number: ${{ inputs.GERRIT_PATCHSET_NUMBER }}
+                  vote-type: ${{ env.WORKFLOW_CONCLUSION }}
 ```
 
 ## Build Workflow (Gerrit Merge)
@@ -159,42 +159,42 @@ Create `.github/workflows/gerrit-merge.yaml`:
 name: Gerrit Packer Merge
 
 on:
-  workflow_dispatch:
-    inputs:
-      GERRIT_BRANCH:
-        required: true
-        type: string
-      platform:
-        description: "Platform (e.g., ubuntu-22.04)"
-        required: true
-        type: string
-      template:
-        description: "Template (e.g., builder)"
-        required: true
-        type: string
+    workflow_dispatch:
+        inputs:
+            GERRIT_BRANCH:
+                required: true
+                type: string
+            platform:
+                description: "Platform (e.g., ubuntu-22.04)"
+                required: true
+                type: string
+            template:
+                description: "Template (e.g., builder)"
+                required: true
+                type: string
 
 jobs:
-  packer-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.GERRIT_BRANCH }}
-          submodules: true
+    packer-build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ inputs.GERRIT_BRANCH }}
+                  submodules: true
 
-      - run: git submodule update --init
+            - run: git submodule update --init
 
-      - name: Build Image
-        uses: lfit/packer-openstack-bastion-action@v1
-        with:
-          mode: build
-          packer_template: "templates/${{ inputs.template }}.pkr.hcl"
-          packer_vars_file: "common-packer/vars/${{ inputs.platform }}.pkrvars.hcl"
-          packer_working_dir: "packer"
-          cloud_env_json: ${{ secrets.CLOUD_ENV_JSON_B64 }}
-          openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
-          # ... other OpenStack secrets
-          tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
+            - name: Build Image
+              uses: lfit/packer-openstack-bastion-action@v1
+              with:
+                  mode: build
+                  packer_template: "templates/${{ inputs.template }}.pkr.hcl"
+                  packer_vars_file: "common-packer/vars/${{ inputs.platform }}.pkrvars.hcl"
+                  packer_working_dir: "packer"
+                  cloud_env_json: ${{ secrets.CLOUD_ENV_JSON_B64 }}
+                  openstack_auth_url: ${{ secrets.OPENSTACK_AUTH_URL }}
+                  # ... other OpenStack secrets
+                  tailscale_auth_key: ${{ secrets.TAILSCALE_AUTH_KEY }}
 ```
 
 ## Triggering from Gerrit
@@ -237,18 +237,18 @@ Accept: application/vnd.github.v3+json
 
 ```json
 {
-  "ref": "main",
-  "inputs": {
-    "GERRIT_BRANCH": "${branch}",
-    "GERRIT_CHANGE_ID": "${change-id}",
-    "GERRIT_CHANGE_NUMBER": "${change-number}",
-    "GERRIT_CHANGE_URL": "${change-url}",
-    "GERRIT_EVENT_TYPE": "${event-type}",
-    "GERRIT_PATCHSET_NUMBER": "${patchset-number}",
-    "GERRIT_PATCHSET_REVISION": "${revision}",
-    "GERRIT_PROJECT": "${project}",
-    "GERRIT_REFSPEC": "${refspec}"
-  }
+    "ref": "main",
+    "inputs": {
+        "GERRIT_BRANCH": "${branch}",
+        "GERRIT_CHANGE_ID": "${change-id}",
+        "GERRIT_CHANGE_NUMBER": "${change-number}",
+        "GERRIT_CHANGE_URL": "${change-url}",
+        "GERRIT_EVENT_TYPE": "${event-type}",
+        "GERRIT_PATCHSET_NUMBER": "${patchset-number}",
+        "GERRIT_PATCHSET_REVISION": "${revision}",
+        "GERRIT_PROJECT": "${project}",
+        "GERRIT_REFSPEC": "${refspec}"
+    }
 }
 ```
 
@@ -258,49 +258,49 @@ Accept: application/vnd.github.v3+json
 
 ```yaml
 jobs:
-  packer-build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
-        template: [builder, docker, robot]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - run: git submodule update --init
-      - uses: lfit/packer-openstack-bastion-action@v1
-        with:
-          mode: build
-          packer_template: "templates/${{ matrix.template }}.pkr.hcl"
-          packer_vars_file: "common-packer/vars/${{ matrix.platform }}.pkrvars.hcl"
-          # ... other inputs
+    packer-build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                platform: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+                template: [builder, docker, robot]
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: true
+            - run: git submodule update --init
+            - uses: lfit/packer-openstack-bastion-action@v1
+              with:
+                  mode: build
+                  packer_template: "templates/${{ matrix.template }}.pkr.hcl"
+                  packer_vars_file: "common-packer/vars/${{ matrix.platform }}.pkrvars.hcl"
+                  # ... other inputs
 ```
 
 ### Using Workflow Inputs
 
 ```yaml
 on:
-  workflow_dispatch:
-    inputs:
-      combinations:
-        description: "JSON array of [{platform, template}]"
-        required: true
+    workflow_dispatch:
+        inputs:
+            combinations:
+                description: "JSON array of [{platform, template}]"
+                required: true
 
 jobs:
-  generate-matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - id: set-matrix
-        run: echo "matrix=${{ inputs.combinations }}" >> $GITHUB_OUTPUT
+    generate-matrix:
+        runs-on: ubuntu-latest
+        outputs:
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+        steps:
+            - id: set-matrix
+              run: echo "matrix=${{ inputs.combinations }}" >> $GITHUB_OUTPUT
 
-  build:
-    needs: generate-matrix
-    strategy:
-      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-    # ... rest of job
+    build:
+        needs: generate-matrix
+        strategy:
+            matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+        # ... rest of job
 ```
 
 ## Validation vs Build Comparison
@@ -326,12 +326,12 @@ jobs:
 1. Check `packer_working_dir` is correct
 2. Ensure paths are relative to working directory
 3. Verify submodules are checked out:
-   ```yaml
-   - uses: lfit/checkout-gerrit-change-action@v0.9
-     with:
-       submodules: "true"
-   - run: git submodule update --init
-   ```
+    ```yaml
+    - uses: lfit/checkout-gerrit-change-action@v0.9
+      with:
+          submodules: "true"
+    - run: git submodule update --init
+    ```
 
 ### Build Fails: "tailscale_auth_key is required"
 
@@ -362,7 +362,7 @@ gh secret set TAILSCALE_AUTH_KEY --body "tskey-auth-..."
 ```yaml
 - uses: lfit/checkout-gerrit-change-action@v0.9
   with:
-    submodules: "true" # ← Must be string "true"
+      submodules: "true" # ← Must be string "true"
 - run: git submodule update --init
 ```
 
@@ -380,12 +380,12 @@ gh secret set TAILSCALE_AUTH_KEY --body "tskey-auth-..."
 
 See `examples/workflows/` directory:
 
-- `gerrit-packer-verify.yaml` - Complete verification workflow
-- `gerrit-packer-merge.yaml` - Complete build workflow
-- `matrix-build-example.yaml` - Multi-combination builds
+-   `gerrit-packer-verify.yaml` - Complete verification workflow
+-   `gerrit-packer-merge.yaml` - Complete build workflow
+-   `matrix-build-example.yaml` - Multi-combination builds
 
 ## References
 
-- [Gerrit Review Action](https://github.com/lfit/gerrit-review-action)
-- [Checkout Gerrit Change Action](https://github.com/lfit/checkout-gerrit-change-action)
-- [Gerrit Documentation](https://gerrit-review.googlesource.com/Documentation/)
+-   [Gerrit Review Action](https://github.com/lfit/gerrit-review-action)
+-   [Checkout Gerrit Change Action](https://github.com/lfit/checkout-gerrit-change-action)
+-   [Gerrit Documentation](https://gerrit-review.googlesource.com/Documentation/)

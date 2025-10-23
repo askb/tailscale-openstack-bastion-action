@@ -4,12 +4,12 @@ Common issues and solutions for the OpenStack Tailscale Bastion workflow.
 
 ## Table of Contents
 
-- [OpenStack Issues](#openstack-issues)
-- [Tailscale Issues](#tailscale-issues)
-- [Bastion Issues](#bastion-issues)
-- [Packer Issues](#packer-issues)
-- [Network Issues](#network-issues)
-- [Debug Techniques](#debug-techniques)
+-   [OpenStack Issues](#openstack-issues)
+-   [Tailscale Issues](#tailscale-issues)
+-   [Bastion Issues](#bastion-issues)
+-   [Packer Issues](#packer-issues)
+-   [Network Issues](#network-issues)
+-   [Debug Techniques](#debug-techniques)
 
 ---
 
@@ -28,24 +28,24 @@ Unable to authenticate to OpenStack
 
 1. Verify credentials in GitHub secrets:
 
-   ```bash
-   # Test locally first
-   export OS_AUTH_URL="https://auth.openstack.net/v3"
-   export OS_PROJECT_NAME="your-project"
-   export OS_USERNAME="your-username"
-   export OS_PASSWORD="your-password"
-   export OS_REGION_NAME="ca-ymq-1"
+    ```bash
+    # Test locally first
+    export OS_AUTH_URL="https://auth.openstack.net/v3"
+    export OS_PROJECT_NAME="your-project"
+    export OS_USERNAME="your-username"
+    export OS_PASSWORD="your-password"
+    export OS_REGION_NAME="ca-ymq-1"
 
-   openstack server list
-   ```
+    openstack server list
+    ```
 
 2. Check secret names match exactly:
 
-   - `OPENSTACK_AUTH_URL`
-   - `OPENSTACK_PROJECT_NAME`
-   - `OPENSTACK_USERNAME`
-   - `OPENSTACK_PASSWORD`
-   - `OPENSTACK_REGION`
+    - `OPENSTACK_AUTH_URL`
+    - `OPENSTACK_PROJECT_NAME`
+    - `OPENSTACK_USERNAME`
+    - `OPENSTACK_PASSWORD`
+    - `OPENSTACK_REGION`
 
 3. Verify OpenStack account is active and has quota
 
@@ -62,24 +62,24 @@ Error: Quota exceeded for cores
 
 1. Check current usage:
 
-   ```bash
-   openstack quota show
-   openstack server list
-   ```
+    ```bash
+    openstack quota show
+    openstack server list
+    ```
 
 2. Delete unused instances:
 
-   ```bash
-   openstack server list
-   openstack server delete <instance-name>
-   ```
+    ```bash
+    openstack server list
+    openstack server delete <instance-name>
+    ```
 
 3. Request quota increase from OpenStack support
 
 4. Use smaller instance flavor:
-   ```yaml
-   bastion_flavor: "v3-starter-1" # Smaller/cheaper
-   ```
+    ```yaml
+    bastion_flavor: "v3-starter-1" # Smaller/cheaper
+    ```
 
 ### ❌ Image Not Found
 
@@ -93,20 +93,20 @@ Error: Image 'Ubuntu 22.04' not found
 
 1. List available images:
 
-   ```bash
-   openstack image list
-   ```
+    ```bash
+    openstack image list
+    ```
 
 2. Update workflow with exact image name:
 
-   ```yaml
-   bastion_image: "Ubuntu-22.04-x86_64" # Exact name from image list
-   ```
+    ```yaml
+    bastion_image: "Ubuntu-22.04-x86_64" # Exact name from image list
+    ```
 
 3. Common OpenStack image names:
-   - `Ubuntu 22.04`
-   - `Ubuntu-22.04-x86_64`
-   - `ubuntu-22.04`
+    - `Ubuntu 22.04`
+    - `Ubuntu-22.04-x86_64`
+    - `ubuntu-22.04`
 
 ---
 
@@ -125,32 +125,32 @@ Bastion never appears in tailscale status
 
 1. **Check Auth Key Settings:**
 
-   - Go to Tailscale admin → Auth Keys
-   - Verify key has these settings:
-     - ✅ Reusable
-     - ✅ Pre-authorized
-     - ✅ Ephemeral (recommended)
-   - Tags: `tag:bastion`
+    - Go to Tailscale admin → Auth Keys
+    - Verify key has these settings:
+        - ✅ Reusable
+        - ✅ Pre-authorized
+        - ✅ Ephemeral (recommended)
+    - Tags: `tag:bastion`
 
 2. **Regenerate Auth Key:**
 
-   ```bash
-   # In Tailscale admin console
-   1. Revoke old key
-   2. Generate new key with correct settings
-   3. Update GitHub secret TAILSCALE_AUTH_KEY
-   ```
+    ```bash
+    # In Tailscale admin console
+    1. Revoke old key
+    2. Generate new key with correct settings
+    3. Update GitHub secret TAILSCALE_AUTH_KEY
+    ```
 
 3. **Check ACLs:**
 
-   - Ensure `tag:ci` and `tag:bastion` are allowed to communicate
-   - Review Tailscale ACL policy
+    - Ensure `tag:ci` and `tag:bastion` are allowed to communicate
+    - Review Tailscale ACL policy
 
 4. **Increase Timeout:**
-   ```yaml
-   env:
-     BASTION_WAIT_TIMEOUT: 600 # 10 minutes
-   ```
+    ```yaml
+    env:
+        BASTION_WAIT_TIMEOUT: 600 # 10 minutes
+    ```
 
 ### ❌ OAuth Key Invalid
 
@@ -167,9 +167,9 @@ Tailscale authentication failed
 
 2. Regenerate OAuth client:
 
-   - Go to Tailscale Settings → OAuth Clients
-   - Generate new client with `devices:write` scope
-   - Update `TAILSCALE_OAUTH_KEY` secret
+    - Go to Tailscale Settings → OAuth Clients
+    - Generate new client with `devices:write` scope
+    - Update `TAILSCALE_OAUTH_KEY` secret
 
 3. Check OAuth client is not expired or revoked
 
@@ -207,27 +207,27 @@ Instance shows ERROR status
 
 1. **Check Instance Status:**
 
-   ```bash
-   openstack server show bastion-gh-XXXXX
-   ```
+    ```bash
+    openstack server show bastion-gh-XXXXX
+    ```
 
 2. **View Console Log:**
 
-   ```bash
-   openstack console log show bastion-gh-XXXXX --lines 100
-   ```
+    ```bash
+    openstack console log show bastion-gh-XXXXX --lines 100
+    ```
 
 3. **Common Causes:**
 
-   - Insufficient quota
-   - Invalid flavor
-   - Network issues
-   - Image corrupted
+    - Insufficient quota
+    - Invalid flavor
+    - Network issues
+    - Image corrupted
 
 4. **Try Different Base Image:**
-   ```yaml
-   bastion_image: "Ubuntu 24.04" # Try newer version
-   ```
+    ```yaml
+    bastion_image: "Ubuntu 24.04" # Try newer version
+    ```
 
 ### ❌ Cloud-Init Failed
 
@@ -242,28 +242,28 @@ SSH connection refused
 
 1. **Check Console Output:**
 
-   ```bash
-   openstack console log show bastion-gh-XXXXX --lines 200
-   ```
+    ```bash
+    openstack console log show bastion-gh-XXXXX --lines 200
+    ```
 
 2. **Access via VNC Console:**
 
-   ```bash
-   openstack console url show bastion-gh-XXXXX
-   # Open URL in browser
-   ```
+    ```bash
+    openstack console url show bastion-gh-XXXXX
+    # Open URL in browser
+    ```
 
 3. **Common Cloud-Init Errors:**
 
-   - Network not available during boot
-   - Tailscale install script failed
-   - Auth key expired or invalid
+    - Network not available during boot
+    - Tailscale install script failed
+    - Auth key expired or invalid
 
 4. **Manual Verification:**
-   - Login via VNC console
-   - Check `/var/log/cloud-init-output.log`
-   - Check `/var/log/cloud-init.log`
-   - Run `cloud-init status --wait`
+    - Login via VNC console
+    - Check `/var/log/cloud-init-output.log`
+    - Check `/var/log/cloud-init.log`
+    - Run `cloud-init status --wait`
 
 ### ❌ SSH Connection Failed
 
@@ -278,25 +278,25 @@ Permission denied (publickey)
 
 1. **Verify Bastion is in Tailscale:**
 
-   ```bash
-   sudo tailscale status | grep bastion
-   ```
+    ```bash
+    sudo tailscale status | grep bastion
+    ```
 
 2. **Test Connectivity:**
 
-   ```bash
-   ping <bastion-tailscale-ip>
-   ```
+    ```bash
+    ping <bastion-tailscale-ip>
+    ```
 
 3. **Check SSH Service:**
 
-   - Access via VNC console
-   - Run `systemctl status sshd`
-   - Run `systemctl status ssh`
+    - Access via VNC console
+    - Run `systemctl status sshd`
+    - Run `systemctl status ssh`
 
 4. **Tailscale SSH:**
-   - Workflow uses `--ssh` flag in cloud-init
-   - SSH should work without keys via Tailscale
+    - Workflow uses `--ssh` flag in cloud-init
+    - SSH should work without keys via Tailscale
 
 ---
 
@@ -315,31 +315,31 @@ Error: Missing required variable
 
 1. **Test Template Locally:**
 
-   ```bash
-   cd packer
-   packer init templates/
-   packer fmt templates/
-   packer validate -var-file=vars/ubuntu-22.04.pkrvars.hcl templates/builder.pkr.hcl
-   ```
+    ```bash
+    cd packer
+    packer init templates/
+    packer fmt templates/
+    packer validate -var-file=vars/ubuntu-22.04.pkrvars.hcl templates/builder.pkr.hcl
+    ```
 
 2. **Check Variable Files:**
 
-   - Ensure all required variables are defined
-   - Check for syntax errors in `.pkrvars.hcl` files
+    - Ensure all required variables are defined
+    - Check for syntax errors in `.pkrvars.hcl` files
 
 3. **Verify Bastion Variables:**
 
-   ```hcl
-   variable "bastion_host" {
-     type    = string
-     default = ""
-   }
+    ```hcl
+    variable "bastion_host" {
+      type    = string
+      default = ""
+    }
 
-   variable "bastion_user" {
-     type    = string
-     default = "root"
-   }
-   ```
+    variable "bastion_user" {
+      type    = string
+      default = "root"
+    }
+    ```
 
 ### ❌ Packer Build Failed
 
@@ -355,31 +355,31 @@ Build failed during provisioning
 
 1. **Enable Debug Logging:**
 
-   - Set workflow input `debug_mode: true`
-   - Or add to workflow:
-     ```yaml
-     env:
-       PACKER_LOG: 1
-     ```
+    - Set workflow input `debug_mode: true`
+    - Or add to workflow:
+        ```yaml
+        env:
+            PACKER_LOG: 1
+        ```
 
 2. **Check Bastion Connectivity:**
 
-   - Verify bastion can reach build instance
-   - Check network security groups
-   - Verify SSH port is open
+    - Verify bastion can reach build instance
+    - Check network security groups
+    - Verify SSH port is open
 
 3. **Increase Timeouts:**
 
-   ```hcl
-   ssh_timeout = "20m"
-   ssh_handshake_attempts = 20
-   ```
+    ```hcl
+    ssh_timeout = "20m"
+    ssh_handshake_attempts = 20
+    ```
 
 4. **Check Build Instance:**
-   ```bash
-   openstack server list  # Find build instance
-   openstack console log show <build-instance>
-   ```
+    ```bash
+    openstack server list  # Find build instance
+    openstack console log show <build-instance>
+    ```
 
 ### ❌ Plugin Installation Failed
 
@@ -394,31 +394,31 @@ Plugin not found
 
 1. **Initialize Plugins:**
 
-   ```bash
-   packer init templates/
-   ```
+    ```bash
+    packer init templates/
+    ```
 
 2. **Check Required Plugins:**
 
-   ```hcl
-   packer {
-     required_plugins {
-       openstack = {
-         version = ">= 1.0.0"
-         source  = "github.com/hashicorp/openstack"
-       }
-     }
-   }
-   ```
+    ```hcl
+    packer {
+      required_plugins {
+        openstack = {
+          version = ">= 1.0.0"
+          source  = "github.com/hashicorp/openstack"
+        }
+      }
+    }
+    ```
 
 3. **Cache Plugins (in workflow):**
-   ```yaml
-   - name: Cache Packer plugins
-     uses: actions/cache@v3
-     with:
-       path: ~/.packer.d/plugins
-       key: packer-plugins-${{ runner.os }}
-   ```
+    ```yaml
+    - name: Cache Packer plugins
+      uses: actions/cache@v3
+      with:
+          path: ~/.packer.d/plugins
+          key: packer-plugins-${{ runner.os }}
+    ```
 
 ---
 
@@ -437,22 +437,22 @@ Error: Unable to reach OpenStack endpoint
 
 1. **Verify Auth URL:**
 
-   ```bash
-   curl -I https://auth.openstack.net/v3
-   ```
+    ```bash
+    curl -I https://auth.openstack.net/v3
+    ```
 
 2. **Check GitHub Runner Network:**
 
-   - GitHub runners should have internet access
-   - No additional firewall rules needed
+    - GitHub runners should have internet access
+    - No additional firewall rules needed
 
 3. **Test from Runner:**
-   ```yaml
-   - name: Test connectivity
-     run: |
-       curl -v https://auth.openstack.net/v3
-       ping -c 3 auth.openstack.net
-   ```
+    ```yaml
+    - name: Test connectivity
+      run: |
+          curl -v https://auth.openstack.net/v3
+          ping -c 3 auth.openstack.net
+    ```
 
 ### ❌ Bastion Cannot Reach Build Instance
 
@@ -467,35 +467,35 @@ Bastion cannot connect to target
 
 1. **Check Network Configuration:**
 
-   - Verify both instances on same network
-   - Check security group rules
-   - Verify network exists:
-     ```bash
-     openstack network list
-     ```
+    - Verify both instances on same network
+    - Check security group rules
+    - Verify network exists:
+        ```bash
+        openstack network list
+        ```
 
 2. **Update Network in Workflow:**
 
-   ```yaml
-   env:
-     OPENSTACK_NETWORK: "your-network-name"
-   ```
+    ```yaml
+    env:
+        OPENSTACK_NETWORK: "your-network-name"
+    ```
 
 3. **Check Security Groups:**
 
-   ```bash
-   openstack security group list
-   openstack security group rule list default
-   ```
+    ```bash
+    openstack security group list
+    openstack security group rule list default
+    ```
 
 4. **Allow SSH Between Instances:**
-   ```bash
-   openstack security group rule create \
-     --protocol tcp \
-     --dst-port 22 \
-     --remote-ip 0.0.0.0/0 \
-     default
-   ```
+    ```bash
+    openstack security group rule create \
+      --protocol tcp \
+      --dst-port 22 \
+      --remote-ip 0.0.0.0/0 \
+      default
+    ```
 
 ---
 
@@ -507,13 +507,13 @@ Bastion cannot connect to target
 
 ```yaml
 env:
-  PACKER_LOG: 1
-  ACTIONS_STEP_DEBUG: true
+    PACKER_LOG: 1
+    ACTIONS_STEP_DEBUG: true
 ```
 
 **In Workflow Dispatch:**
 
-- Set `debug_mode: true`
+-   Set `debug_mode: true`
 
 ### View Bastion Logs
 
@@ -582,8 +582,8 @@ sudo journalctl -u tailscaled
 1. Go to GitHub Actions → Workflow run
 2. Scroll to "Artifacts" section
 3. Download:
-   - `packer-logs-XXXXX`
-   - `bastion-logs-XXXXX`
+    - `packer-logs-XXXXX`
+    - `bastion-logs-XXXXX`
 
 ### Live Debugging
 
@@ -593,15 +593,15 @@ sudo journalctl -u tailscaled
 - name: Debug - List resources
   if: failure()
   run: |
-    echo "=== OpenStack Resources ==="
-    openstack server list
-    openstack network list
+      echo "=== OpenStack Resources ==="
+      openstack server list
+      openstack network list
 
-    echo "=== Tailscale Status ==="
-    sudo tailscale status
+      echo "=== Tailscale Status ==="
+      sudo tailscale status
 
-    echo "=== Environment ==="
-    env | grep -E '(OS_|BASTION_)' | sort
+      echo "=== Environment ==="
+      env | grep -E '(OS_|BASTION_)' | sort
 ```
 
 ### Common Debug Commands
@@ -635,23 +635,23 @@ PACKER_LOG=1 packer build -var-file=... template.pkr.hcl
 
 ### Check Documentation
 
-- Main README: `README.md`
-- Quick Start: `docs/QUICK_START.md`
-- This guide: `docs/TROUBLESHOOTING.md`
+-   Main README: `README.md`
+-   Quick Start: `docs/QUICK_START.md`
+-   This guide: `docs/TROUBLESHOOTING.md`
 
 ### View Logs
 
-- GitHub Actions logs
-- Packer logs artifact
-- Bastion logs artifact
-- OpenStack console logs
+-   GitHub Actions logs
+-   Packer logs artifact
+-   Bastion logs artifact
+-   OpenStack console logs
 
 ### Community Support
 
-- GitHub Discussions
-- Tailscale Community Forum
-- OpenStack Support Portal
-- Packer Community Forum
+-   GitHub Discussions
+-   Tailscale Community Forum
+-   OpenStack Support Portal
+-   Packer Community Forum
 
 ### Reporting Issues
 
@@ -660,16 +660,16 @@ When reporting issues, include:
 1. **Workflow Run URL**
 2. **Error Messages** (full output)
 3. **Environment:**
-   - Packer version
-   - OpenStack image/flavor
-   - GitHub runner OS
+    - Packer version
+    - OpenStack image/flavor
+    - GitHub runner OS
 4. **Logs:**
-   - Workflow logs
-   - Packer logs
-   - Bastion console log
+    - Workflow logs
+    - Packer logs
+    - Bastion console log
 5. **Configuration:**
-   - Workflow inputs used
-   - Template/vars files
+    - Workflow inputs used
+    - Template/vars files
 6. **Steps to Reproduce**
 
 ---
@@ -689,33 +689,33 @@ packer validate -var-file=vars/ubuntu-22.04.pkrvars.hcl templates/builder.pkr.hc
 
 ### 2. Start Simple
 
-- Use default workflow settings first
-- Build one template at a time
-- Use proven base images (Ubuntu 22.04)
+-   Use default workflow settings first
+-   Build one template at a time
+-   Use proven base images (Ubuntu 22.04)
 
 ### 3. Use Ephemeral Keys
 
-- Always use ephemeral Tailscale auth keys
-- Enable auto-cleanup features
-- Set reasonable expiration times
+-   Always use ephemeral Tailscale auth keys
+-   Enable auto-cleanup features
+-   Set reasonable expiration times
 
 ### 4. Monitor Costs
 
-- Check OpenStack billing regularly
-- Delete unused instances
-- Use appropriate instance flavors
+-   Check OpenStack billing regularly
+-   Delete unused instances
+-   Use appropriate instance flavors
 
 ### 5. Keep Secrets Secure
 
-- Rotate credentials regularly
-- Use minimal required permissions
-- Never commit secrets to git
+-   Rotate credentials regularly
+-   Use minimal required permissions
+-   Never commit secrets to git
 
 ### 6. Enable Cleanup
 
-- Workflow has automatic cleanup
-- Verify cleanup completed
-- Manual cleanup if workflow fails:
+-   Workflow has automatic cleanup
+-   Verify cleanup completed
+-   Manual cleanup if workflow fails:
 
 ```bash
 # List bastion instances
@@ -754,10 +754,10 @@ export OS_DEBUG=1
 
 ### Important Files
 
-- Workflow: `.github/workflows/packer-openstack-bastion-build.yaml`
-- Pre-commit: `.pre-commit-config.yaml`
-- Yamllint: `.yamllint.conf`
-- Documentation: `docs/`
+-   Workflow: `.github/workflows/packer-openstack-bastion-build.yaml`
+-   Pre-commit: `.pre-commit-config.yaml`
+-   Yamllint: `.yamllint.conf`
+-   Documentation: `docs/`
 
 ### Key Environment Variables
 
