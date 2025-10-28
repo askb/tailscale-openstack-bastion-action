@@ -21,7 +21,7 @@ DEBUG_MODE="${DEBUG_MODE:-false}"
 TAILSCALE_OAUTH_CLIENT_ID="${TAILSCALE_OAUTH_CLIENT_ID:-}"
 TAILSCALE_OAUTH_SECRET="${TAILSCALE_OAUTH_SECRET:-}"
 TAILSCALE_AUTH_KEY="${TAILSCALE_AUTH_KEY:-}"
-TAILSCALE_TAGS="${TAILSCALE_TAGS:-tag:ci}"
+BASTION_TAILSCALE_TAGS="${BASTION_TAILSCALE_TAGS:-tag:bastion}"
 TAILSCALE_USE_EPHEMERAL_KEYS="${TAILSCALE_USE_EPHEMERAL_KEYS:-true}"
 
 # Logging function
@@ -206,7 +206,7 @@ EOF
     # Substitute placeholders
     sed -i "s/BASTION_HOSTNAME_PLACEHOLDER/${BASTION_NAME}/g" "${cloud_init_file}"
     sed -i "s|TAILSCALE_AUTH_PLACEHOLDER|${tailscale_auth_cmd}|g" "${cloud_init_file}"
-    sed -i "s/TAILSCALE_TAGS_PLACEHOLDER/${TAILSCALE_TAGS}/g" "${cloud_init_file}"
+    sed -i "s/TAILSCALE_TAGS_PLACEHOLDER/${BASTION_TAILSCALE_TAGS}/g" "${cloud_init_file}"
 
     if [[ "${DEBUG_MODE}" == "true" ]]; then
         log "Cloud-init configuration:"

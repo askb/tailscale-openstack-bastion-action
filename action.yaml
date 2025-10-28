@@ -80,9 +80,13 @@ inputs:
     required: false
     default: ""
   tailscale_tags:
-    description: "Comma-separated list of Tailscale tags (e.g., 'tag:ci,tag:bastion')"
+    description: "Comma-separated list of Tailscale tags for the GitHub runner (e.g., 'tag:ci')"
     required: false
     default: "tag:ci"
+  bastion_tailscale_tags:
+    description: "Comma-separated list of Tailscale tags for the bastion VM (e.g., 'tag:bastion')"
+    required: false
+    default: "tag:bastion"
   tailscale_version:
     description: "Tailscale version"
     required: false
@@ -210,6 +214,7 @@ runs:
         TAILSCALE_OAUTH_SECRET: ${{ inputs.tailscale_oauth_secret }}
         TAILSCALE_AUTH_KEY: ${{ inputs.tailscale_auth_key }}
         TAILSCALE_TAGS: ${{ inputs.tailscale_tags }}
+        BASTION_TAILSCALE_TAGS: ${{ inputs.bastion_tailscale_tags }}
         TAILSCALE_USE_EPHEMERAL_KEYS: ${{ inputs.tailscale_use_ephemeral_keys }}
         # Bastion configuration
         BASTION_NAME: ${{ inputs.bastion_name }}
