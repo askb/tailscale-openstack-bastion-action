@@ -182,7 +182,7 @@ runs:
       run: |
         echo "Configuring OpenStack credentials..."
         # Decode base64 encoded password
-        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        PASSWORD=$(printf '%s' "${OS_PASSWORD}" | base64 -d)
         export OS_PASSWORD="${PASSWORD}"
 
         # Validate credentials
@@ -228,7 +228,7 @@ runs:
         set -euo pipefail
 
         # Decode base64 encoded password
-        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        PASSWORD=$(printf '%s' "${OS_PASSWORD}" | base64 -d)
         export OS_PASSWORD="${PASSWORD}"
 
         # Set bastion name
@@ -259,7 +259,7 @@ runs:
         set -euo pipefail
 
         # Decode base64 encoded password
-        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        PASSWORD=$(printf '%s' "${OS_PASSWORD}" | base64 -d)
         export OS_PASSWORD="${PASSWORD}"
 
         TIMEOUT="${BASTION_WAIT_TIMEOUT}"
@@ -310,7 +310,7 @@ runs:
         set -euo pipefail
 
         # Decode base64 encoded password
-        PASSWORD=$(echo "${OS_PASSWORD}" | base64 -d)
+        PASSWORD=$(printf '%s' "${OS_PASSWORD}" | base64 -d)
         export OS_PASSWORD="${PASSWORD}"
 
         BASTION_NAME="${BASTION_NAME:-bastion-gh-${{ github.run_id }}}"
