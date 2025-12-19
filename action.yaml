@@ -54,7 +54,7 @@ inputs:
   bastion_wait_timeout:
     description: "Timeout in seconds to wait for bastion to be ready"
     required: false
-    default: "300"
+    default: "600"
   bastion_name:
     description: "Name for the bastion instance (defaults to bastion-gh-{run_id})"
     required: false
