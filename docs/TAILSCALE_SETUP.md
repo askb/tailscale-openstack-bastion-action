@@ -62,12 +62,12 @@ Auth keys work for both runner and bastion but are deprecated:
 2. Click **"Generate OAuth client"**
 3. Configure settings:
     - **Description:** `GitHub Actions - Packer Builds`
-    - **Write Scopes:** Select `auth_keys`
+    - **Write Scopes:** Select `auth_keys` and `core`
     - **Tags:** `tag:ci`, `tag:bastion`
 4. Click **"Generate client"**
 5. **IMPORTANT:** Copy both values immediately:
-    - **Client ID:** `kA4v...` → Save as `TAILSCALE_OAUTH_CLIENT_ID`
-    - **Client Secret:** `tskey-client-kA4v...` → Save as `TAILSCALE_OAUTH_SECRET`
+    - **Client ID:** `kXxXxXxXxXxXCNTRL` → Save as `TAILSCALE_OAUTH_CLIENT_ID`
+    - **Client Secret:** `tskey-client-kXxXxXxXxXxXCNTRL-YyYyYyYyYyYyYyYyYyYyYyYyYyYy` → Save as `TAILSCALE_OAUTH_SECRET`
 
 ### Step 2: Configure ACLs
 
@@ -133,10 +133,10 @@ Go to **GitHub → Settings → Secrets and variables → Actions**
 
 Add these secrets:
 
-| Secret Name                 | Value                       |
-| --------------------------- | --------------------------- |
-| `TAILSCALE_OAUTH_CLIENT_ID` | `kA4v...` (Client ID)       |
-| `TAILSCALE_OAUTH_SECRET`    | `tskey-client-...` (Secret) |
+| Secret Name                 | Value                                     |
+| --------------------------- | ----------------------------------------- |
+| `TAILSCALE_OAUTH_CLIENT_ID` | `kXxXxXxXxXxXCNTRL` (Client ID)           |
+| `TAILSCALE_OAUTH_SECRET`    | `tskey-client-kXxXx...YyYy` (Secret)      |
 
 ### Step 4: Use in Workflow
 
