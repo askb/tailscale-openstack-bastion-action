@@ -32,10 +32,10 @@ graph TB
         VPN["Secure WireGuard Tunnel"]
     end
 
-    RunnerTS -.->|Encrypted<br/>Connection| VPN
+    RunnerTS -.->|🔒 Encrypted<br/>Connection| VPN
 
     subgraph OpenStack["🌐 OpenStack Cloud"]
-        subgraph Bastion["Bastion Host (Ephemeral)"]
+        subgraph Bastion["⚡ Bastion Host (Ephemeral)"]
             BastionTS["Tailscale Agent<br/>(tag:bastion)"]
             PackerOpt["Packer<br/>(Optional)"]
             CloudInit["Cloud-init:<br/>Tailscale + Packer +<br/>Network Config"]
@@ -43,17 +43,22 @@ graph TB
             BastionTS ~~~ CloudInit
         end
 
-        Resources["OpenStack Resources<br/>(Build Target Infrastructure)"]
+        Resources["🎯 Build Target<br/>Infrastructure"]
         Bastion --> Resources
     end
 
-    VPN -.->|Encrypted<br/>Connection| BastionTS
+    VPN -.->|🔒 Encrypted<br/>Connection| BastionTS
 
-    style GitHub fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style OpenStack fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style Tailscale fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style Bastion fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style VPN fill:#ede7f6,stroke:#4a148c,stroke-width:2px
+    %% Modern color scheme with better contrast
+    style GitHub fill:#bbdefb,stroke:#1565c0,stroke-width:3px,color:#000
+    style OpenStack fill:#ffccbc,stroke:#d84315,stroke-width:3px,color:#000
+    style Tailscale fill:#e1bee7,stroke:#6a1b9a,stroke-width:3px,color:#000
+    style Bastion fill:#c8e6c9,stroke:#2e7d32,stroke-width:3px,color:#000
+    style VPN fill:#d1c4e9,stroke:#4527a0,stroke-width:3px,color:#000
+    style Packer fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style RunnerTS fill:#b3e5fc,stroke:#0277bd,stroke-width:2px,color:#000
+    style BastionTS fill:#a5d6a7,stroke:#388e3c,stroke-width:2px,color:#000
+    style Resources fill:#ffab91,stroke:#bf360c,stroke-width:2px,color:#000
 ```
 
 ### Workflow

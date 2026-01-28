@@ -49,10 +49,10 @@ Configure these in your repository: **Settings → Secrets and variables → Act
 
 ### Tailscale Secrets
 
-| Secret Name           | Description                    | How to Get                                                                                                           |
-| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `TAILSCALE_OAUTH_KEY` | OAuth client for GitHub runner | [Tailscale Admin Console](https://login.tailscale.com/admin/settings/oauth) → Generate OAuth client                  |
-| `TAILSCALE_AUTH_KEY`  | Auth key for bastion host      | [Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys) → Generate auth key (ephemeral, reusable) |
+| Secret Name                                              | Description                    | How to Get                                                                                                           |
+| -------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `TAILSCALE_OAUTH_CLIENT_ID` and `TAILSCALE_OAUTH_SECRET` | OAuth client for GitHub runner | [Tailscale Admin Console](https://login.tailscale.com/admin/settings/oauth) → Generate OAuth client                  |
+| `TAILSCALE_AUTH_KEY`                                     | Auth key for bastion host      | [Tailscale Admin Console](https://login.tailscale.com/admin/settings/keys) → Generate auth key (ephemeral, reusable) |
 
 **Tailscale OAuth Key Settings:**
 

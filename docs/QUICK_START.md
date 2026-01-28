@@ -67,7 +67,7 @@ Add these 8 secrets:
 
 | Secret Name              | Value                | Example                         |
 | ------------------------ | -------------------- | ------------------------------- |
-| `TAILSCALE_OAUTH_KEY`    | OAuth client secret  | `tskey-client-...`              |
+| `TAILSCALE_OAUTH_SECRET` | OAuth client secret  | `tskey-client-...`              |
 | `TAILSCALE_AUTH_KEY`     | Auth key from Step 1 | `tskey-auth-...`                |
 | `OPENSTACK_AUTH_URL`     | OpenStack endpoint   | `https://auth.openstack.net/v3` |
 | `OPENSTACK_PROJECT_ID`   | Project ID           | `abc123...`                     |

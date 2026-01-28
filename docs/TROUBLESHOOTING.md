@@ -169,7 +169,7 @@ Tailscale authentication failed
 
     - Go to Tailscale Settings → OAuth Clients
     - Generate new client with `devices:write` scope
-    - Update `TAILSCALE_OAUTH_KEY` secret
+    - Update `TAILSCALE_OAUTH_SECRET` secret
 
 3. Check OAuth client is not expired or revoked
 
