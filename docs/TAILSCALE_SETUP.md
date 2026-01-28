@@ -133,10 +133,10 @@ Go to **GitHub → Settings → Secrets and variables → Actions**
 
 Add these secrets:
 
-| Secret Name                 | Value                                     |
-| --------------------------- | ----------------------------------------- |
-| `TAILSCALE_OAUTH_CLIENT_ID` | `kXxXxXxXxXxXCNTRL` (Client ID)           |
-| `TAILSCALE_OAUTH_SECRET`    | `tskey-client-kXxXx...YyYy` (Secret)      |
+| Secret Name                 | Value                                |
+| --------------------------- | ------------------------------------ |
+| `TAILSCALE_OAUTH_CLIENT_ID` | `kXxXxXxXxXxXCNTRL` (Client ID)      |
+| `TAILSCALE_OAUTH_SECRET`    | `tskey-client-kXxXx...YyYy` (Secret) |
 
 ### Step 4: Use in Workflow
 
