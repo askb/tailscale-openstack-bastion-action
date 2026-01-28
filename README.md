@@ -278,6 +278,13 @@ Your Tailscale ACL must include:
             "dst": ["*:*"]
         }
     ],
+    "grants": [
+        {
+            "src": ["*"],
+            "dst": ["*"],
+            "ip": ["*"]
+        }
+    ],
     "ssh": [
         {
             "action": "accept",
@@ -285,7 +292,14 @@ Your Tailscale ACL must include:
             "dst": ["tag:bastion"],
             "users": ["root", "ubuntu", "autogroup:nonroot"]
         }
-    ]
+    ],
+    "autoApprovers": {
+        "routes": {
+            "0.0.0.0/0": ["autogroup:admin"],
+            "::/0": ["autogroup:admin"]
+        },
+        "exitNode": ["autogroup:admin"]
+    }
 }
 ```
 
