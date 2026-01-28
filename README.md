@@ -16,6 +16,75 @@ A GitHub Action to setup and teardown OpenStack bastion hosts with Tailscale VPN
 -   🔑 **Flexible Auth**: Supports both OAuth (recommended) and legacy auth keys
 -   📊 **Detailed Logging**: Comprehensive logs for debugging
 
+## Architecture
+
+### Component Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     GitHub Actions Runner                        │
+│  ┌──────────────┐         ┌────────────────┐                   │
+│  │   Packer     │────────▶│  Tailscale VPN │                   │
+│  │  Installed   │         │   Connected    │                   │
+│  └──────────────┘         └────────┬───────┘                   │
+└────────────────────────────────────┼─────────────────────────────┘
+                                     │
+                         Tailscale Mesh Network
+                                     │
+┌────────────────────────────────────┼─────────────────────────────┐
+│                OpenStack Cloud      │                              │
+│  ┌─────────────────────────────────▼──────────────────────────┐ │
+│  │            Bastion Host (Ephemeral)                         │ │
+│  │  ┌──────────────┐    ┌────────────────┐                   │ │
+│  │  │  Tailscale   │    │     Packer     │                   │ │
+│  │  │   Agent      │    │   (Optional)   │                   │ │
+│  │  └──────────────┘    └────────────────┘                   │ │
+│  │                                                             │ │
+│  │  Cloud-init: Tailscale + Packer + Network Config          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│           ┌──────────────────────────────────┐                  │
+│           │  OpenStack Resources             │                  │
+│           │  (Build Target Infrastructure)    │                  │
+│           └──────────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Workflow
+
+```mermaid
+graph TD
+    A[GitHub Actions Triggered] --> B[Setup Packer & Python]
+    B --> C[Connect to Tailscale VPN]
+    C --> D[Configure OpenStack CLI]
+    D --> E[Generate Cloud-Init Script]
+    E --> F[Launch Bastion on OpenStack]
+    F --> G{Bastion Joins Tailscale?}
+    G -->|Yes| H[Get Bastion IP]
+    G -->|Timeout| Z[Show Logs & Fail]
+    H --> I{Ready Marker Found?}
+    I -->|Yes| J[Initialize Packer]
+    I -->|No| K[Wait & Retry]
+    K --> I
+    J --> L[Validate Templates]
+    L --> M[Build Images via Bastion]
+    M --> N[Upload Artifacts]
+    N --> O[Delete Bastion]
+    O --> P[Workflow Complete]
+    Z --> O
+```
+
+**Key Stages**:
+
+1. **GitHub Runner Setup** → Install dependencies & connect to Tailscale
+2. **Bastion Launch** → Spin up ephemeral VM on OpenStack with cloud-init
+3. **Network Mesh** → Bastion joins Tailscale, creates secure tunnel
+4. **Build Execution** → Execute builds via bastion proxy
+5. **Cleanup** → Destroy bastion, disconnect from Tailscale
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
+
 ## Prerequisites
 
 -   OpenStack cloud account with necessary permissions
